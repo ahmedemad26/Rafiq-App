@@ -1,29 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import SignUpForm from "./_components/sign-up-form";
+import LoginForm from "./_components/login-form";
 
-export default function SignUpPage() {
+export default function LoginPage() {
   return (
     <div className="bg-white rounded-xl p-4 w-full max-w-lg shadow-sm">
       <div className="text-center md:text-center mb-3">
+        {/* Header */}
         <h1 className="text-2xl md:text-3xl font-bold mb-1 text-[var(--color-slate-dark)]">
-          Create your workspace
+          Welcome Back
         </h1>
         <p className="text-sm text-[var(--color-slate-mid)]">
-          Join the editorial approach to task management.
+          Please enter your details to access your workspace
         </p>
       </div>
 
-      <SignUpForm />
+      {/* Login Form */}
+      <LoginForm />
 
+      {/* Footer */}
       <p className="text-center text-sm mt-5 text-[var(--color-slate-mid)]">
-        Already have an account?{" "}
+        Don&apos;t have an account?{" "}
         <Link
-          href="/login"
+          href="/signup"
           className="font-semibold text-[var(--color-primary)]"
         >
-          Log in
+          SignUp
         </Link>
       </p>
     </div>

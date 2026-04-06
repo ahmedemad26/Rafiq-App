@@ -1,0 +1,225 @@
+"use client";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, Circle, Loader2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+import { registerSchema, RegisterValues, PASSWORD_CHECKS } from "@/lib/schemes/register-schema";
+import useRegister from "../_hooks/use-register";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils/utils";
+
+export default function SignUpForm() {
+  // Navigation
+  const router = useRouter();
+
+  // Mutation
+  const { mutate: register, isPending } = useRegister();
+
+  //Form
+  const form = useForm<RegisterValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      department: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+
+  // Watch Password
+  const password = form.watch("password");
+
+  // Function
+  const onSubmit = (values: RegisterValues) => {
+    register(values, {
+      onSuccess: () => {
+        toast.success("Account created successfully");
+        setTimeout(() => router.push("/login"), 2000);
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    });
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-1">
+        {form.formState.errors.root?.message && (
+          <p className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {form.formState.errors.root.message}
+          </p>
+        )}
+
+        {/* Name */}
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+                Name
+              </FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Enter your full name"
+                  {...field}
+                  className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                />
+              </FormControl>
+              <FormMessage className="text-xs" />
+            </FormItem>
+          )}
+        />
+
+        {/* Email */}
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+                Email
+              </FormLabel>
+              <FormControl>
+                <Input
+                  type="email"
+                  placeholder="yourname@company.com"
+                  {...field}
+                  className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                />
+              </FormControl>
+              <FormMessage className="text-xs" />
+            </FormItem>
+          )}
+        />
+
+        {/* Department */}
+        <FormField
+          control={form.control}
+          name="department"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+                Job Title{" "}
+                <span className="text-[var(--color-slate-light)]">
+                  (Optional)
+                </span>
+              </FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="e.g. Project Manager"
+                  {...field}
+                  className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                />
+              </FormControl>
+              <FormMessage className="text-xs" />
+            </FormItem>
+          )}
+        />
+
+        {/* Passwords */}
+        <div className="flex gap-3">
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+                  Password
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Min 8 chars"
+                    {...field}
+                    className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                  />
+                </FormControl>
+                <FormMessage className="text-xs" />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+                  Confirm
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Repeat"
+                    {...field}
+                    className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                  />
+                </FormControl>
+                <FormMessage className="text-xs" />
+              </FormItem>
+            )}
+          />
+        </div>
+
+
+        {/* Password Checks */}
+        <div
+          className="space-y-1 rounded-md bg-[var(--color-surface-highest)] p-3"
+        >
+          {PASSWORD_CHECKS.map(({ label, test }) => {
+            const valid = test(password);
+            return (
+              <div
+                key={label}
+                className={cn(
+                  "flex items-center gap-2 text-xs",
+                  valid ? "text-[var(--color-primary)]" : "text-[var(--color-slate-mid)]"
+                )}
+              >
+                {valid ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                ) : (
+                  <Circle className="h-3.5 w-3.5 shrink-0" />
+                )}
+                <span>{label}</span>
+              </div>
+            );
+          })}
+        </div>
+
+
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="w-full py-6 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:opacity-90 disabled:opacity-70 transition-all"
+        >
+          <span className="inline-flex items-center gap-2">
+            <span>Create Account</span>
+            {isPending && <Loader2 className="h-5 w-5 animate-spin" />}
+          </span>
+        </Button>
+
+
+      </form>
+    </Form>
+  );
+}
