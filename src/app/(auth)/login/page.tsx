@@ -1,7 +1,11 @@
-"use client";
-
 import Link from "next/link";
+import type { Metadata } from "next";
 import LoginForm from "./_components/login-form";
+
+export const metadata: Metadata = {
+  title: { absolute: "Rafiq - Login" },
+  description: "Log in to your Taskly workspace.",
+};
 
 export default function LoginPage() {
   return (

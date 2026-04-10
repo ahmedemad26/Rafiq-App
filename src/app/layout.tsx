@@ -9,8 +9,25 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Taskly",
-  description: "The editorial approach to task management.",
+  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
+  title: {
+    default: "Taskly",
+    template: "%s | Taskly",
+  },
+  description: "Taskly helps teams manage projects and tasks with a clean, focused workspace.",
+  applicationName: "Taskly",
+  keywords: ["Taskly", "project management", "tasks", "workspace", "productivity"],
+  openGraph: {
+    title: "Taskly",
+    description: "Taskly helps teams manage projects and tasks with a clean, focused workspace.",
+    siteName: "Taskly",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Taskly",
+    description: "Taskly helps teams manage projects and tasks with a clean, focused workspace.",
+  },
 };
 
 export default function RootLayout({

@@ -14,7 +14,7 @@ export const authOptions: NextAuthOptions = {
       },
       authorize: async (credentials) => {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/token?grant_type=password`,
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`,
           {
             method: "POST",
             body: JSON.stringify({

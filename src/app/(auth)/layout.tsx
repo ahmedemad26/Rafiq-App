@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { Box } from "lucide-react";
-import { Toaster } from "@/components/ui/sonner";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Authentication",
+  description: "Sign in to Taskly or create a new account.",
+};
+
 export default function AuthLayout({
   children,
 }: {
@@ -29,7 +35,6 @@ export default function AuthLayout({
       </header>
       <main className="flex-1 flex items-center justify-center px-4 overflow-hidden">
         {children}
-        <Toaster />
       </main>
     </div>
   );

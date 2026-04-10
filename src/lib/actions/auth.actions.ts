@@ -5,7 +5,7 @@ import { AuthResponse, ApiResponse } from '../types/auth';
 
 export async function registerAction(values: RegisterValues): Promise<ApiResponse<AuthResponse>> {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/signup`,
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/signup`,
     {
       method: 'POST',
       body: JSON.stringify({
