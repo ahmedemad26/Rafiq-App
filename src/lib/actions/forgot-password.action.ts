@@ -6,10 +6,8 @@ import { AuthResponse, ApiResponse } from "../types/auth";
 export async function ForgotPasswordAction(
   values: ForgotPasswordValues,
 ): Promise<ApiResponse<AuthResponse>> {
-  const redirectTo =
-    process.env.NEXT_PUBLIC_PASSWORD_RESET_REDIRECT_URL ??
-    "http://localhost:3000/reset-password";
-
+  const redirectTo = process.env.NEXT_PUBLIC_PASSWORD_RESET_REDIRECT_URL!;
+  
   const recoverUrl = new URL(
     `https://senppmtyjdhsnucxosmd.supabase.co/auth/v1/recover`,
   );

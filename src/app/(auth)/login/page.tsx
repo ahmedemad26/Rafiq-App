@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import LoginForm from "./_components/login-form";
+import RecoveryRedirect from "./_components/recovery-redirect";
 
 export const metadata: Metadata = {
   title: { absolute: "Rafiq - Login" },
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <div className="bg-white rounded-xl p-4 w-full max-w-lg shadow-sm">
+      <RecoveryRedirect />
       <div className="text-center md:text-center mb-3">
         {/* Header */}
         <h1 className="text-2xl md:text-3xl font-bold mb-1 text-[var(--color-slate-dark)]">
