@@ -13,8 +13,17 @@ export const authOptions: NextAuthOptions = {
         password: {},
       },
       authorize: async (credentials) => {
+        const supabaseUrl =
+          process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseAnonKey =
+          process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+        if (!supabaseUrl || !supabaseAnonKey) {
+          throw new Error("Missing Supabase environment variables");
+        }
+
         const response = await fetch(
-          `${process.env.SUPABASE_URL}/auth/v1/token?grant_type=password`,
+          `${supabaseUrl}/auth/v1/token?grant_type=password`,
           {
             method: "POST",
             body: JSON.stringify({
@@ -23,8 +32,8 @@ export const authOptions: NextAuthOptions = {
             }),
             headers: {
               "Content-Type": "application/json",
-              apikey: process.env.SUPABASE_ANON_KEY!,
-              Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+              apikey: supabaseAnonKey,
+              Authorization: `Bearer ${supabaseAnonKey}`,
             }
           },
         );
