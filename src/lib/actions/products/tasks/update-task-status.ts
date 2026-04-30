@@ -4,6 +4,7 @@ import {
   buildSupabaseHeaders,
   extractErrorMessage,
   getAccessToken,
+  getSupabaseConfig,
   NETWORK_ERROR_MESSAGE,
   parseJsonResponseBody,
   UNAUTHORIZED_MESSAGE,
@@ -21,12 +22,16 @@ export async function updateTaskStatus(taskId: string, status: string): Promise<
       return { error: UNAUTHORIZED_MESSAGE };
     }
 
-    const url = new URL(`${process.env.SUPABASE_URL}/rest/v1/tasks`);
+    const supabase = getSupabaseConfig();
+    if (supabase.error) return { error: supabase.error };
+    if (!supabase.url || !supabase.anonKey) return { error: "Missing Supabase configuration." };
+
+    const url = new URL(`${supabase.url}/rest/v1/tasks`);
     url.searchParams.set("id", `eq.${taskId}`);
 
     const res = await fetch(url.toString(), {
       method: "PATCH",
-      headers: buildSupabaseHeaders(accessToken),
+      headers: buildSupabaseHeaders(accessToken, supabase.anonKey),
       body: JSON.stringify({ status }),
       cache: "no-store",
     });

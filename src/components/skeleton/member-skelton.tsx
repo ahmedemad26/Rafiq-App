@@ -32,7 +32,13 @@ export function MembersLoadingState() {
     );  
 }
 
-export function MembersErrorState({ onRetry }: { onRetry: () => void }) {
+export function MembersErrorState({
+    onRetry,
+    message,
+}: {
+    onRetry: () => void;
+    message?: string;
+}) {
     return (
         <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-slate-200/70 bg-white px-6 text-center shadow-[0_4px_24px_rgba(15,23,42,0.06)]">
             <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-500">
@@ -42,7 +48,7 @@ export function MembersErrorState({ onRetry }: { onRetry: () => void }) {
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-[#11284d]">Something went wrong</h2>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-600">
-                Failed to load project members. Please try again.
+                {message ?? "Failed to load project members. Please try again."}
             </p>
             <Button
                 type="button"

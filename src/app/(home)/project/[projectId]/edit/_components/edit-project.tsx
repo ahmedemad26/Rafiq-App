@@ -2,8 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Check, Lightbulb, Pencil } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -38,6 +39,7 @@ export default function EditProject({
   onCancel,
   onNameChange,
 }: EditProjectProps) {
+  const router = useRouter();
   const form = useForm<UpdateProjectValues>({
     resolver: zodResolver(updateProjectSchema),
     defaultValues: {
@@ -47,9 +49,13 @@ export default function EditProject({
     mode: "onChange",
   });
 
-  const { data: project, isPending: isProjectLoading, isError } = useProjectDetails(projectId);
+  const { data: project, isPending: isProjectLoading, isError, error } = useProjectDetails(projectId);
   const { mutate, isPending } = useUpdateProject();
   const descriptionLen = form.watch("description")?.length ?? 0;
+  const errorMessage = useMemo(
+    () => (error instanceof Error ? error.message : "Failed to load project details"),
+    [error],
+  );
 
   useEffect(() => {
     if (!project) return;
@@ -58,6 +64,14 @@ export default function EditProject({
       description: project.description ?? "",
     });
   }, [form, project]);
+
+  useEffect(() => {
+    if (!isError) return;
+    const normalized = errorMessage.toLowerCase();
+    if (!normalized.includes("jwt expired") && !normalized.includes("unauthorized")) return;
+    const callback = encodeURIComponent(`/project/${projectId}/edit`);
+    router.replace(`/login?callbackUrl=${callback}`);
+  }, [errorMessage, isError, projectId, router]);
 
   const onSubmit: SubmitHandler<UpdateProjectValues> = (values) => {
     mutate(
@@ -101,7 +115,7 @@ export default function EditProject({
 
         {isError ? (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            Failed to load project details
+            {errorMessage}
           </div>
         ) : null}
 

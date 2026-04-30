@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useProjectTasks } from "../_hooks/use-project-tasks";
 import TaskDetailsDialog from "./task-details-dialog";
 import TasksListHeader from "./tasks-list-header";
@@ -25,7 +25,7 @@ export default function TasksListView({ projectId }: { projectId: string }) {
     setCurrentPage(1);
   }, [debouncedSearchValue]);
 
-  const { data, isPending, isError } = useProjectTasks(projectId, {
+  const { data, isPending, isError, error } = useProjectTasks(projectId, {
     page: currentPage,
     pageSize: PAGE_SIZE,
     searchTerm: debouncedSearchValue,
@@ -33,6 +33,18 @@ export default function TasksListView({ projectId }: { projectId: string }) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const tasks = data?.data ?? [];
   const totalItems = data?.total ?? 0;
+  const errorMessage = useMemo(
+    () => (error instanceof Error ? error.message : "Failed to load tasks"),
+    [error],
+  );
+
+  useEffect(() => {
+    if (!isError) return;
+    const normalized = errorMessage.toLowerCase();
+    if (!normalized.includes("jwt expired") && !normalized.includes("unauthorized")) return;
+    const callback = encodeURIComponent(`/project/${projectId}/tasks?view=list`);
+    router.replace(`/login?callbackUrl=${callback}`);
+  }, [errorMessage, isError, projectId, router]);
 
   return (
     <section className="space-y-5">
@@ -55,6 +67,7 @@ export default function TasksListView({ projectId }: { projectId: string }) {
         totalItems={totalItems}
         isPending={isPending}
         isError={isError}
+        errorMessage={errorMessage}
         hasSearch={Boolean(debouncedSearchValue)}
         currentPage={currentPage}
         pageSize={PAGE_SIZE}

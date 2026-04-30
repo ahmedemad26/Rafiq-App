@@ -11,9 +11,7 @@ export function useProjectDetails(projectId: string) {
   return useQuery({
     queryKey: [...queryKeys.projects.root, "details", projectId] as const,
     queryFn: async () => {
-      console.log("[useProjectDetails] fetching projectId:", projectId);
       const result = await getProjectById(projectId);
-      console.log("[useProjectDetails] result:", result);
       if ("error" in result && result.error) {
         throw new Error(result.error);
       }

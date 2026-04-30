@@ -4,6 +4,7 @@ import {
   buildSupabaseHeaders,
   extractErrorMessage,
   getAccessToken,
+  getSupabaseConfig,
   NETWORK_ERROR_MESSAGE,
   parseJsonResponseBody,
   UNAUTHORIZED_MESSAGE,
@@ -24,13 +25,17 @@ export async function getProjectTaskDetails(
       return { error: UNAUTHORIZED_MESSAGE };
     }
 
-    const url = new URL(`${process.env.SUPABASE_URL}/rest/v1/project_tasks`);
+    const supabase = getSupabaseConfig();
+    if (supabase.error) return { error: supabase.error };
+    if (!supabase.url || !supabase.anonKey) return { error: "Missing Supabase configuration." };
+
+    const url = new URL(`${supabase.url}/rest/v1/project_tasks`);
     url.searchParams.set("project_id", `eq.${projectId}`);
     url.searchParams.set("id", `eq.${taskId}`);
 
     const res = await fetch(url.toString(), {
       method: "GET",
-      headers: buildSupabaseHeaders(accessToken),
+      headers: buildSupabaseHeaders(accessToken, supabase.anonKey),
       cache: "no-store",
     });
 

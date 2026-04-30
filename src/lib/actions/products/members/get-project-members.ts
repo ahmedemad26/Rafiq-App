@@ -1,6 +1,7 @@
 "use server";
 
 import { authOptions } from "@/auth";
+import { getSupabaseConfig } from "@/lib/actions/products/_utils/supabase-request";
 import { type ProjectMember } from "@/lib/types/member";
 import { getServerSession } from "next-auth";
 
@@ -45,7 +46,11 @@ export async function getProjectMembers(projectId: string) {
       return { error: "Unauthorized. Please login again." };
     }
 
-    const url = new URL(`${process.env.SUPABASE_URL}/rest/v1/get_project_members`);
+    const supabase = getSupabaseConfig();
+    if (supabase.error) return { error: supabase.error };
+    if (!supabase.url || !supabase.anonKey) return { error: "Missing Supabase configuration." };
+
+    const url = new URL(`${supabase.url}/rest/v1/get_project_members`);
     url.searchParams.set("project_id", `eq.${projectId}`);
 
     const res = await fetch(url.toString(), {
@@ -53,7 +58,7 @@ export async function getProjectMembers(projectId: string) {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        apikey: process.env.SUPABASE_ANON_KEY!,
+        apikey: supabase.anonKey,
         Authorization: `Bearer ${accessToken}`,
       },
       cache: "no-store",

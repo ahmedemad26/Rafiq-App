@@ -25,6 +25,7 @@ export default function StatusColumn({
     data,
     isPending,
     isError,
+    error,
     hasNextPage,
     isFetchingNextPage,
     isFetchNextPageError,
@@ -34,6 +35,8 @@ export default function StatusColumn({
   const tasks = data?.pages.flatMap((page) => page.data) ?? [];
   const count = data?.pages[0]?.total ?? 0;
   const addTaskHref = `/project/${projectId}/tasks/new?status=${status}`;
+  const errorMessage =
+    error instanceof Error ? error.message : searchTerm ? "Failed to search tasks" : "Failed to load tasks";
 
   return (
     <section className="w-[260px] shrink-0 space-y-3">
@@ -78,7 +81,7 @@ export default function StatusColumn({
 
         {!isPending && isError ? (
           <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500">
-            Failed to search tasks
+            {errorMessage}
           </div>
         ) : null}
 

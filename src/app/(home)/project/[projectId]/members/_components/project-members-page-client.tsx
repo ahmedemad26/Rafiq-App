@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import MembersBreadcrumb from "./members-breadcrumb";
 import { useProjectMembers } from "../_hooks/use-project-members";
@@ -14,8 +15,21 @@ type ProjectMembersPageClientProps = {
 };
 
 export default function ProjectMembersPageClient({ projectId }: ProjectMembersPageClientProps) {
-  const { data, isPending, isError, refetch } = useProjectMembers(projectId);
+  const router = useRouter();
+  const { data, isPending, isError, error, refetch } = useProjectMembers(projectId);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const errorMessage = useMemo(
+    () => (error instanceof Error ? error.message : "Failed to load project members. Please try again."),
+    [error],
+  );
+
+  useEffect(() => {
+    if (!isError) return;
+    const normalized = errorMessage.toLowerCase();
+    if (!normalized.includes("jwt expired") && !normalized.includes("unauthorized")) return;
+    const callback = encodeURIComponent(`/project/${projectId}/members`);
+    router.replace(`/login?callbackUrl=${callback}`);
+  }, [errorMessage, isError, projectId, router]);
 
   return (
     <section className="-mx-6 -mt-6 flex min-h-[calc(100svh-8rem)] flex-col overflow-x-hidden bg-[#F4F7FA] px-6 pb-16 pt-0">
@@ -46,7 +60,9 @@ export default function ProjectMembersPageClient({ projectId }: ProjectMembersPa
       />
 
       {isPending ? <MembersLoadingState /> : null}
-      {!isPending && isError ? <MembersErrorState onRetry={() => void refetch()} /> : null}
+      {!isPending && isError ? (
+        <MembersErrorState message={errorMessage} onRetry={() => void refetch()} />
+      ) : null}
       {!isPending && !isError ? <MembersTable members={data ?? []} /> : null}
     </section>
   );

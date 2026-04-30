@@ -10,6 +10,7 @@ type TasksListTableProps = {
   totalItems: number;
   isPending: boolean;
   isError: boolean;
+  errorMessage?: string;
   hasSearch: boolean;
   currentPage: number;
   pageSize: number;
@@ -116,6 +117,7 @@ export default function TasksListTable({
   totalItems,
   isPending,
   isError,
+  errorMessage,
   hasSearch,
   currentPage,
   pageSize,
@@ -153,7 +155,7 @@ export default function TasksListTable({
             {!isPending && isError ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-500">
-                  Failed to search tasks
+                  {errorMessage || (hasSearch ? "Failed to search tasks" : "Failed to load tasks")}
                 </td>
               </tr>
             ) : null}

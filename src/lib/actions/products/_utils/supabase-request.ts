@@ -4,20 +4,40 @@ import { getServerSession } from "next-auth";
 export const UNAUTHORIZED_MESSAGE = "Unauthorized. Please login again.";
 export const INVALID_RESPONSE_MESSAGE = "Invalid server response. Please check the API endpoint.";
 export const NETWORK_ERROR_MESSAGE = "Network error. Please try again.";
+export const MISSING_SUPABASE_URL_MESSAGE = "Missing Supabase URL configuration.";
+export const MISSING_SUPABASE_ANON_KEY_MESSAGE = "Missing Supabase anon key configuration.";
 
 export async function getAccessToken(): Promise<string | null> {
   const session = await getServerSession(authOptions);
   return session?.user?.access_token ?? null;
 }
 
+export function getSupabaseConfig():
+  | { url: string; anonKey: string; error: null }
+  | { url: null; anonKey: null; error: string } {
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey =
+    process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url?.trim()) {
+    return { url: null, anonKey: null, error: MISSING_SUPABASE_URL_MESSAGE };
+  }
+  if (!anonKey?.trim()) {
+    return { url: null, anonKey: null, error: MISSING_SUPABASE_ANON_KEY_MESSAGE };
+  }
+
+  return { url, anonKey, error: null };
+}
+
 export function buildSupabaseHeaders(
   accessToken: string,
+  anonKey: string,
   extraHeaders?: Record<string, string>,
 ): Record<string, string> {
   return {
     "Content-Type": "application/json",
     Accept: "application/json",
-    apikey: process.env.SUPABASE_ANON_KEY!,
+    apikey: anonKey,
     Authorization: `Bearer ${accessToken}`,
     ...extraHeaders,
   };
