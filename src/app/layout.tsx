@@ -8,8 +8,23 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const inter = Inter({ subsets: ["latin"] });
 
+function resolveMetadataBase(): URL {
+  const raw = process.env.NEXTAUTH_URL?.trim();
+  const fallback = "http://localhost:3000";
+
+  if (!raw) return new URL(fallback);
+
+  const normalized = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+
+  try {
+    return new URL(normalized);
+  } catch {
+    return new URL(fallback);
+  }
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
+  metadataBase: resolveMetadataBase(),
   title: {
     default: "Taskly",
     template: "%s | Taskly",
