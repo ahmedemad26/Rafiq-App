@@ -28,24 +28,18 @@ export function SidebarNavList({ navItems, onItemClick }: SidebarNavListProps) {
               className={`h-12 rounded-lg px-4 transition-all duration-200 ${
                 item.isActive
                   ? "bg-white text-[#2B59C3] shadow-sm hover:bg-white hover:text-[#2B59C3]"
-                  : item.disabled
-                    ? "cursor-not-allowed text-[#94A3B8] opacity-60"
-                    : "text-[#475569] hover:bg-[#E0E7FF] hover:text-[#1E293B]"
+                  : "text-[#475569] hover:bg-[#E0E7FF] hover:text-[#1E293B]"
               }`}
             >
               <Link
-                href={item.disabled ? "/project" : item.href}
+                href={item.href}
                 className="flex items-center gap-3"
                 onClick={(event) => {
-                  if (item.disabled) {
-                    event.preventDefault()
-                    return
-                  }
                   onItemClick?.()
                 }}
               >
                 <item.icon
-                  className={`size-5 ${item.isActive ? "text-[#2B59C3]" : item.disabled ? "text-[#94A3B8]" : "text-[#64748B]"}`}
+                  className={`size-5 ${item.isActive ? "text-[#2B59C3]" : "text-[#64748B]"}`}
                 />
                 <span className="text-[14px] font-semibold">{item.title}</span>
               </Link>

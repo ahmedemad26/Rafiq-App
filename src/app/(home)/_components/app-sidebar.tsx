@@ -30,7 +30,6 @@ function getActiveProjectId(pathname: string): string | null {
 
 function buildNavItems(projectId: string | null): NavItem[] {
   const projectBasePath = projectId ? `/project/${projectId}` : "/project"
-  const projectScopedDisabled = !projectId
 
   return [
     { title: "Projects", shortTitle: "Projects", icon: FolderOpen, href: "/project" },
@@ -39,28 +38,24 @@ function buildNavItems(projectId: string | null): NavItem[] {
       shortTitle: "Epics",
       icon: Workflow,
       href: `${projectBasePath}/epics`,
-      disabled: projectScopedDisabled,
     },
     {
       title: "Project Tasks",
       shortTitle: "Tasks",
       icon: CheckCheck,
       href: `${projectBasePath}/tasks?view=list`,
-      disabled: projectScopedDisabled,
     },
     {
       title: "Project Members",
       shortTitle: "Members",
       icon: Users,
       href: `${projectBasePath}/members`,
-      disabled: projectScopedDisabled,
     },
     {
       title: "Project Details",
       shortTitle: "Details",
       icon: CircleHelp,
       href: `${projectBasePath}/edit`,
-      disabled: projectScopedDisabled,
     },
   ]
 }
