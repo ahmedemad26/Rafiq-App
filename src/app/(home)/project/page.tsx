@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CirclePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -25,6 +26,7 @@ type ProjectWithDate = {
 
 export default function ProjectsPage() {
   const [page, setPage] = useState(1);
+  const router = useRouter();
   const isMobile = useIsMobile();
   const limit = PROJECTS_PAGE_SIZE;
 
@@ -62,6 +64,23 @@ export default function ProjectsPage() {
     : pageQuery.isPending;
 
   const isError = isMobile ? infiniteQuery.isError : pageQuery.isError;
+  const errorMessage = useMemo(() => {
+    const err = isMobile ? infiniteQuery.error : pageQuery.error;
+    return err instanceof Error ? err.message : "Failed to load projects";
+  }, [isMobile, infiniteQuery.error, pageQuery.error]);
+
+  useEffect(() => {
+    if (!isError) return;
+    const normalized = errorMessage.toLowerCase();
+    const isAuthError =
+      normalized.includes("jwt expired") ||
+      normalized.includes("unauthorized");
+
+    if (!isAuthError) return;
+
+    const callback = encodeURIComponent("/project");
+    router.replace(`/login?callbackUrl=${callback}`);
+  }, [errorMessage, isError, router]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / limit) || 1);
 
@@ -103,7 +122,7 @@ export default function ProjectsPage() {
 
       {isError ? (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          Failed to load projects
+          {errorMessage}
         </div>
       ) : null}
 

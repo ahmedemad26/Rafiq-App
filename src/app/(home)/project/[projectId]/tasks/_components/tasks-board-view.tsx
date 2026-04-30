@@ -138,7 +138,7 @@ export default function TasksBoardView({
     },
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: [...queryKeys.projects.root, "tasks", "board", projectId],
+        queryKey: [...queryKeys.projects.root, "tasks"],
       });
     },
   });

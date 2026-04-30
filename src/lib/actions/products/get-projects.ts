@@ -82,8 +82,15 @@ function extractErrorMessage(
 }
 
 function buildSupabaseUrl(limit: number, offset: number): string {
+  const supabaseUrl =
+    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!supabaseUrl) {
+    throw new Error("Missing Supabase URL configuration.");
+  }
+
   const url = new URL(
-    `${process.env.SUPABASE_URL}/rest/v1/rpc/get_projects`,
+    `${supabaseUrl}/rest/v1/rpc/get_projects`,
   );
   url.searchParams.set("limit", String(limit));
   url.searchParams.set("offset", String(offset));
@@ -108,12 +115,19 @@ export async function getProjectsPage(
       return { error: "Unauthorized. Please login again." };
     }
 
+    const supabaseAnonKey =
+      process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseAnonKey) {
+      return { error: "Missing Supabase anon key configuration." };
+    }
+
     const res = await fetch(buildSupabaseUrl(limit, offset), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        apikey: process.env.SUPABASE_ANON_KEY!,
+        apikey: supabaseAnonKey,
         Authorization: `Bearer ${accessToken}`,
         Prefer: "count=exact",
       },
