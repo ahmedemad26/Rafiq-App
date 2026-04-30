@@ -10,6 +10,7 @@ import {
   UNAUTHORIZED_MESSAGE,
 } from "@/lib/actions/products/_utils/supabase-request";
 import type { UpdateTaskStatusResult } from "@/lib/types/actions/products/tasks.type";
+import { revalidateTag } from "next/cache";
 
 export async function updateTaskStatus(taskId: string, status: string): Promise<UpdateTaskStatusResult> {
   if (!taskId?.trim()) return { error: "Task id is required." };
@@ -37,6 +38,7 @@ export async function updateTaskStatus(taskId: string, status: string): Promise<
     });
 
     if (res.ok) {
+      revalidateTag("tasks");
       return { success: true };
     }
 

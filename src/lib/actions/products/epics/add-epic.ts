@@ -1,6 +1,13 @@
 "use server";
 
 import { authOptions } from "@/auth";
+import {
+  buildSupabaseHeaders,
+  extractErrorMessage,
+  getSupabaseConfig,
+  NETWORK_ERROR_MESSAGE,
+  parseJsonResponseBody,
+} from "@/lib/actions/products/_utils/supabase-request";
 import { CreateEpicValues } from "@/lib/schemes/products-shema/create-epic.shema";
 import { getServerSession } from "next-auth";
 import { revalidateTag } from "next/cache";
@@ -14,18 +21,6 @@ function toValidUuidOrNull(value?: string): string | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;
   return UUID_REGEX.test(trimmed) ? trimmed : null;
-}
-
-function extractErrorMessage(data: unknown, fallback: string): string {
-  if (
-    typeof data === "object" &&
-    data !== null &&
-    "message" in data &&
-    typeof (data as Record<string, unknown>).message === "string"
-  ) {
-    return (data as Record<string, string>).message;
-  }
-  return fallback;
 }
 
 function buildPayload(values: CreateEpicValues) {
@@ -49,28 +44,20 @@ export async function createEpic(values: CreateEpicValues) {
       return { error: "Unauthorized. Please login again." };
     }
 
-    const res = await fetch(`${process.env.SUPABASE_URL}/rest/v1/epics`, {
+    const supabase = getSupabaseConfig();
+    if (supabase.error) return { error: supabase.error };
+    if (!supabase.url || !supabase.anonKey) return { error: "Missing Supabase configuration." };
+
+    const res = await fetch(`${supabase.url}/rest/v1/epics`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        apikey: process.env.SUPABASE_ANON_KEY!,
-        Authorization: `Bearer ${accessToken}`,
+      headers: buildSupabaseHeaders(accessToken, supabase.anonKey, {
         Prefer: "return=representation",
-      },
+      }),
       body: JSON.stringify(buildPayload(values)),
     });
 
-    const rawBody = await res.text();
-    let data: unknown = null;
-
-    if (rawBody) {
-      try {
-        data = JSON.parse(rawBody);
-      } catch {
-        return { error: "Invalid server response. Please check the API endpoint." };
-      }
-    }
+    const { data, parseError } = await parseJsonResponseBody(res);
+    if (parseError) return { error: parseError };
 
     if (!res.ok) {
       return {
@@ -82,7 +69,7 @@ export async function createEpic(values: CreateEpicValues) {
     return { data };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Network error. Please try again.",
+      error: error instanceof Error ? error.message : NETWORK_ERROR_MESSAGE,
     };
   }
 }

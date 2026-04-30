@@ -1,24 +1,18 @@
 "use server";
 
-import { authOptions } from "@/auth";
+import {
+  buildSupabaseHeaders,
+  extractErrorMessage,
+  getAccessToken,
+  getSupabaseConfig,
+  NETWORK_ERROR_MESSAGE,
+  UNAUTHORIZED_MESSAGE,
+} from "@/lib/actions/products/_utils/supabase-request";
 import type {
   UpdateEpicPatch,
   UpdateEpicResult,
 } from "@/lib/types/actions/products/epics.type";
-import { getServerSession } from "next-auth";
 import { revalidateTag } from "next/cache";
-
-function extractErrorMessage(data: unknown, fallback: string): string {
-  if (
-    typeof data === "object" &&
-    data !== null &&
-    "message" in data &&
-    typeof (data as Record<string, unknown>).message === "string"
-  ) {
-    return (data as Record<string, string>).message;
-  }
-  return fallback;
-}
 
 function buildPatchBody(patch: UpdateEpicPatch): Record<string, unknown> | null {
   const body: Record<string, unknown> = {};
@@ -65,34 +59,24 @@ export async function updateEpic(
   }
 
   try {
-    const session = await getServerSession(authOptions);
-    const accessToken = session?.user?.access_token;
+    const accessToken = await getAccessToken();
 
     if (!accessToken) {
-      return { error: "Unauthorized. Please log in again." };
+      return { error: UNAUTHORIZED_MESSAGE };
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const anonKey = process.env.SUPABASE_ANON_KEY;
+    const supabase = getSupabaseConfig();
+    if (supabase.error) return { error: supabase.error };
+    if (!supabase.url || !supabase.anonKey) return { error: "Missing Supabase configuration." };
 
-    if (!supabaseUrl || !anonKey) {
-      return { error: "Server configuration error. Please contact support." };
-    }
-
-    const url = new URL(`${supabaseUrl}/rest/v1/epics`);
+    const url = new URL(`${supabase.url}/rest/v1/epics`);
     url.searchParams.set("id", `eq.${epicId}`);
 
     const res = await fetch(url.toString(), {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        apikey: anonKey,
-        Authorization: `Bearer ${accessToken}`,
-        // return=representation gives us back the row (useful for errors too)
-        // Use return=minimal only if you never need the updated row
+      headers: buildSupabaseHeaders(accessToken, supabase.anonKey, {
         Prefer: "return=minimal",
-      },
+      }),
       body: JSON.stringify(body),
     });
 
@@ -126,7 +110,7 @@ export async function updateEpic(
       error:
         error instanceof Error
           ? error.message
-          : "Network error. Please try again.",
+          : NETWORK_ERROR_MESSAGE,
     };
   }
 }
