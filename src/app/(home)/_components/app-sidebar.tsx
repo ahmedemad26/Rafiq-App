@@ -13,6 +13,7 @@ export type NavItem = {
   shortTitle: string
   icon: LucideIcon
   href: string
+  disabled?: boolean
 }
 
 export type NavItemWithActive = NavItem & {
@@ -29,18 +30,38 @@ function getActiveProjectId(pathname: string): string | null {
 
 function buildNavItems(projectId: string | null): NavItem[] {
   const projectBasePath = projectId ? `/project/${projectId}` : "/project"
+  const projectScopedDisabled = !projectId
 
   return [
     { title: "Projects", shortTitle: "Projects", icon: FolderOpen, href: "/project" },
-    { title: "Project Epics", shortTitle: "Epics", icon: Workflow, href: `${projectBasePath}/epics` },
+    {
+      title: "Project Epics",
+      shortTitle: "Epics",
+      icon: Workflow,
+      href: `${projectBasePath}/epics`,
+      disabled: projectScopedDisabled,
+    },
     {
       title: "Project Tasks",
       shortTitle: "Tasks",
       icon: CheckCheck,
       href: `${projectBasePath}/tasks?view=list`,
+      disabled: projectScopedDisabled,
     },
-    { title: "Project Members", shortTitle: "Members", icon: Users, href: `${projectBasePath}/members` },
-    { title: "Project Details", shortTitle: "Details", icon: CircleHelp, href: `${projectBasePath}/edit` },
+    {
+      title: "Project Members",
+      shortTitle: "Members",
+      icon: Users,
+      href: `${projectBasePath}/members`,
+      disabled: projectScopedDisabled,
+    },
+    {
+      title: "Project Details",
+      shortTitle: "Details",
+      icon: CircleHelp,
+      href: `${projectBasePath}/edit`,
+      disabled: projectScopedDisabled,
+    },
   ]
 }
 
