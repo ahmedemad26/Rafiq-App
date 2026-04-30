@@ -72,14 +72,14 @@ export default function SignUpForm() {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-slate-mid">
                 Name
               </FormLabel>
               <FormControl>
                 <Input
                   placeholder="Enter your full name"
                   {...field}
-                  className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                  className="bg-surface-highest text-slate-dark"
                 />
               </FormControl>
               <FormMessage className="text-xs" />
@@ -93,7 +93,7 @@ export default function SignUpForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-slate-mid">
                 Email
               </FormLabel>
               <FormControl>
@@ -101,7 +101,7 @@ export default function SignUpForm() {
                   type="email"
                   placeholder="yourname@company.com"
                   {...field}
-                  className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                  className="bg-surface-highest text-slate-dark"
                 />
               </FormControl>
               <FormMessage className="text-xs" />
@@ -115,9 +115,9 @@ export default function SignUpForm() {
           name="department"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-slate-mid">
                 Job Title{" "}
-                <span className="text-[var(--color-slate-light)]">
+                <span className="text-slate-light">
                   (Optional)
                 </span>
               </FormLabel>
@@ -125,7 +125,7 @@ export default function SignUpForm() {
                 <Input
                   placeholder="e.g. Project Manager"
                   {...field}
-                  className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                  className="bg-surface-highest text-slate-dark"
                 />
               </FormControl>
               <FormMessage className="text-xs" />
@@ -140,7 +140,7 @@ export default function SignUpForm() {
             name="password"
             render={({ field }) => (
               <FormItem className="flex-1">
-                <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+                <FormLabel className="text-xs font-semibold tracking-widest uppercase text-slate-mid">
                   Password
                 </FormLabel>
                 <FormControl>
@@ -148,7 +148,7 @@ export default function SignUpForm() {
                     type="password"
                     placeholder="Min 8 chars"
                     {...field}
-                    className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                    className="bg-surface-highest text-slate-dark"
                   />
                 </FormControl>
                 <FormMessage className="text-xs" />
@@ -161,7 +161,7 @@ export default function SignUpForm() {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem className="flex-1">
-                <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+                <FormLabel className="text-xs font-semibold tracking-widest uppercase text-slate-mid">
                   Confirm
                 </FormLabel>
                 <FormControl>
@@ -169,7 +169,7 @@ export default function SignUpForm() {
                     type="password"
                     placeholder="Repeat"
                     {...field}
-                    className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                    className="bg-surface-highest text-slate-dark"
                   />
                 </FormControl>
                 <FormMessage className="text-xs" />
@@ -181,7 +181,7 @@ export default function SignUpForm() {
 
         {/* Password Checks */}
         <div
-          className="space-y-1 rounded-md bg-[var(--color-surface-highest)] p-3"
+          className="space-y-1 rounded-md bg-surface-highest p-3"
         >
           {PASSWORD_CHECKS.map(({ label, test }) => {
             const valid = test(password);
@@ -190,7 +190,7 @@ export default function SignUpForm() {
                 key={label}
                 className={cn(
                   "flex items-center gap-2 text-xs",
-                  valid ? "text-[var(--color-primary)]" : "text-[var(--color-slate-mid)]"
+                  valid ? "text-brand-primary" : "text-slate-mid"
                 )}
               >
                 {valid ? (
@@ -210,7 +210,7 @@ export default function SignUpForm() {
         <Button
           type="submit"
           disabled={isPending}
-          className="w-full py-6 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:opacity-90 disabled:opacity-70 transition-all"
+          className="w-full rounded-lg bg-brand-primary py-6 font-semibold text-white transition-all hover:opacity-90 disabled:opacity-70"
         >
           <span className="inline-flex items-center gap-2">
             <span>Create Account</span>

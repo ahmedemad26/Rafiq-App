@@ -15,7 +15,7 @@ function Label({
       className={cn(
         "text-[11px] font-bold uppercase tracking-[0.55px] leading-[16.5px]",
 
-        "text-[var(--color-slate-mid)]",
+        "text-slate-mid",
 
         // التموضع والخصائص التشغيلية:
         "flex items-center select-none",

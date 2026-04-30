@@ -15,10 +15,10 @@ export default function CreateNewPassword() {
       <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-100">
         {/* Header */}
         <div className="text-left mb-6">
-          <h1 className="text-3xl font-bold mb-3 text-[var(--color-slate-dark)]">
+          <h1 className="text-3xl font-bold mb-3 text-slate-dark">
             Create a New Password{" "}
           </h1>
-          <p className="text-left text-[var(--color-slate-mid)]">
+          <p className="text-left text-slate-mid">
             Create a new, strong password to secure your workstation
             access.{" "}
           </p>
@@ -33,7 +33,7 @@ export default function CreateNewPassword() {
         <div className="mt-4 text-center">
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 font-semibold text-[var(--color-primary)] hover:underline"
+            className="inline-flex items-center gap-2 font-semibold text-brand-primary hover:underline"
           >
             <MoveLeft size={20} /> Back to log in
           </Link>

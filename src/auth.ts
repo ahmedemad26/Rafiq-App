@@ -1,4 +1,4 @@
-import { NextAuthOptions, User } from "next-auth";
+import { AuthResponse, NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
 export const authOptions: NextAuthOptions = {
@@ -14,7 +14,7 @@ export const authOptions: NextAuthOptions = {
       },
       authorize: async (credentials) => {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`,
+          `${process.env.SUPABASE_URL}/auth/v1/token?grant_type=password`,
           {
             method: "POST",
             body: JSON.stringify({
@@ -23,19 +23,26 @@ export const authOptions: NextAuthOptions = {
             }),
             headers: {
               "Content-Type": "application/json",
-              apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+              apikey: process.env.SUPABASE_ANON_KEY!,
+              Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
             }
           },
         );
 
-        const payload: ApiResponse<User> = await response.json();
+        const payload = (await response.json()) as Partial<AuthResponse> & {
+          msg?: string;
+          message?: string;
+        };
 
-        if (!response.ok) return null;
+        if (!response.ok) {
+          const errorMessage = payload.msg ?? payload.message;
+          throw new Error(errorMessage ?? "Invalid credentials");
+        }
 
+        const authPayload = payload as AuthResponse;
         return {
-          ...payload.user,
-          access_token: payload.access_token,
+          ...authPayload.user,
+          access_token: authPayload.access_token,
         };
       },
     }),

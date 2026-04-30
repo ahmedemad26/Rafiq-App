@@ -14,10 +14,10 @@ export default function LoginPage() {
       <RecoveryRedirect />
       <div className="text-center md:text-center mb-3">
         {/* Header */}
-        <h1 className="text-2xl md:text-3xl font-bold mb-1 text-[var(--color-slate-dark)]">
+        <h1 className="text-2xl md:text-3xl font-bold mb-1 text-slate-dark">
           Welcome Back
         </h1>
-        <p className="text-sm text-[var(--color-slate-mid)]">
+        <p className="text-sm text-slate-mid">
           Please enter your details to access your workspace
         </p>
       </div>
@@ -26,11 +26,11 @@ export default function LoginPage() {
       <LoginForm />
 
       {/* Footer */}
-      <p className="text-center text-sm mt-5 text-[var(--color-slate-mid)]">
+      <p className="text-center text-sm mt-5 text-slate-mid">
         Don&apos;t have an account?{" "}
         <Link
           href="/signup"
-          className="font-semibold text-[var(--color-primary)]"
+          className="font-semibold text-brand-primary"
         >
           SignUp
         </Link>

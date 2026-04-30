@@ -24,5 +24,7 @@ export interface ApiResponse<T> {
   error?: {
     code: number;
     message: string;
+    /** GoTrue `error_code` when present (e.g. `email_exists`). */
+    errorCode?: string;
   };
 }

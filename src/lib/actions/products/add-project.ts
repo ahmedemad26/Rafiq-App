@@ -18,13 +18,13 @@ export async function createProject(values: CreateProjectValues) {
 
     // fetch projects
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/projects`,
+      `${process.env.SUPABASE_URL}/rest/v1/projects`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          apikey: process.env.SUPABASE_ANON_KEY!,
           Authorization: `Bearer ${accessToken}`,
           Prefer: 'return=representation',
         },

@@ -15,7 +15,7 @@ export async function CreateNewPasswordAction(
 
     // fetch user
     const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`,
+        `${process.env.SUPABASE_URL}/auth/v1/user`,
         {
             method: "PUT",
             body: JSON.stringify({
@@ -24,7 +24,7 @@ export async function CreateNewPasswordAction(
             headers: {
                 "Content-Type": "application/json",
                 Accept: "application/json",
-                apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                apikey: process.env.SUPABASE_ANON_KEY!,
                 Authorization: `Bearer ${accessToken}`,
             },
         },

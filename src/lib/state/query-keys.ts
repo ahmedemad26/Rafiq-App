@@ -4,5 +4,6 @@ export const queryKeys = {
   },
   projects: {
     all: ["projects"] as const,
+    root: ["projects"] as const,
   },
 } as const;

@@ -6,6 +6,8 @@ const authRoutes = ["/login", "/signup", "/forgot-password", "/reset-password"];
 
 const redirectToLogin = (req: NextRequest) => {
   const url = new URL("/login", req.nextUrl.origin);
+  const nextPath = `${req.nextUrl.pathname}${req.nextUrl.search}`;
+  url.searchParams.set("callbackUrl", nextPath);
   return NextResponse.redirect(url);
 };
 
@@ -21,7 +23,7 @@ export default async function middleware(req: NextRequest) {
   if (authRoutes.includes(path)) {
     // If already logged in and trying to open auth pages, send to app home.
     if (token) {
-      return NextResponse.redirect(new URL("/", req.nextUrl.origin));
+      return NextResponse.redirect(new URL("/project", req.nextUrl.origin));
     }
     return NextResponse.next();
   }

@@ -102,7 +102,7 @@ export default function ResetPasswordForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-slate-mid">
                 New Password
               </FormLabel>
               <FormControl>
@@ -110,7 +110,7 @@ export default function ResetPasswordForm() {
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your new password"
-                    className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)] pr-12"
+                    className="bg-surface-highest pr-12 text-slate-dark"
                     {...field}
                   />
                   <Button
@@ -118,7 +118,7 @@ export default function ResetPasswordForm() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 text-[var(--color-slate-mid)] hover:bg-[var(--color-surface)] hover:text-[var(--color-slate-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40"
+                    className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 text-slate-mid hover:bg-surface-low hover:text-slate-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
                     aria-label="Toggle password visibility"
                   >
                     {showPassword ? (
@@ -142,7 +142,7 @@ export default function ResetPasswordForm() {
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-slate-mid">
                 Confirm Password
               </FormLabel>
               <FormControl>
@@ -150,7 +150,7 @@ export default function ResetPasswordForm() {
                   <Input
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Re-enter your new password"
-                    className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)] pr-12"
+                    className="bg-surface-highest pr-12 text-slate-dark"
                     {...field}
                   />
                   <Button
@@ -158,7 +158,7 @@ export default function ResetPasswordForm() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowConfirmPassword((prev) => !prev)}
-                    className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 text-[var(--color-slate-mid)] hover:bg-[var(--color-surface)] hover:text-[var(--color-slate-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40"
+                    className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 text-slate-mid hover:bg-surface-low hover:text-slate-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
                     aria-label="Toggle confirm password visibility"
                   >
                     {showConfirmPassword ? (
@@ -176,8 +176,8 @@ export default function ResetPasswordForm() {
 
 
         {/* Security Requirements */}
-        <div className="rounded-md bg-[var(--color-surface-highest)] p-4">
-          <p className="mb-3 text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+        <div className="rounded-md bg-surface-highest p-4">
+          <p className="mb-3 text-xs font-semibold tracking-widest uppercase text-slate-mid">
             Security Requirements
           </p>
 
@@ -190,8 +190,8 @@ export default function ResetPasswordForm() {
                   className={cn(
                     "flex items-center gap-2 text-xs",
                     valid
-                      ? "text-[var(--color-primary)]"
-                      : "text-[var(--color-slate-mid)]",
+                      ? "text-brand-primary"
+                      : "text-slate-mid",
                   )}
                 >
                   {valid ? (
@@ -211,7 +211,7 @@ export default function ResetPasswordForm() {
         <Button
           type="submit"
           disabled={isPending}
-          className="w-full py-6 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:opacity-90 disabled:opacity-70 transition-all"
+          className="w-full rounded-lg bg-brand-primary py-6 font-semibold text-white transition-all hover:opacity-90 disabled:opacity-70"
         >
           <span className="inline-flex items-center gap-2">
             Update Password

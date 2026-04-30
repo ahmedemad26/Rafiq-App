@@ -1,9 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { Loader2, MoveRight } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -23,25 +22,39 @@ import { loginSchema, LoginValues } from "@/lib/schemes/auth.shcema";
 import useLogin from "../_hooks/use-login";
 import { Label } from "@/components/ui/label";
 
-export default function LoginForm() {
-  // Navigation
-  const router = useRouter();
+const REMEMBERED_EMAIL_KEY = "taskly.remembered_email";
 
+export default function LoginForm() {
   //   Form
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", remember: false },
   });
 
   //   Mutiation
-  const { login, isPending } = useLogin();
+  const { login, isPending, isSuccess } = useLogin();
+
+  const isBusy = isPending || isSuccess;
+
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem(REMEMBERED_EMAIL_KEY);
+    if (rememberedEmail) {
+      form.setValue("email", rememberedEmail);
+      form.setValue("remember", true);
+    }
+  }, [form]);
 
   // Function
   const onSubmit = (values: LoginValues) => {
-    login(values, {
+    if (values.remember) {
+      localStorage.setItem(REMEMBERED_EMAIL_KEY, values.email);
+    } else {
+      localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+    }
+
+    login({ email: values.email, password: values.password }, {
       onSuccess: () => {
         toast.success("Logged in successfully");
-        setTimeout(() => router.push("/"), 2000);
       },
       onError: (err) => {
         toast.error(err.message);
@@ -58,7 +71,7 @@ export default function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-slate-mid">
                 Email
               </FormLabel>
               <FormControl>
@@ -66,7 +79,7 @@ export default function LoginForm() {
                   type="email"
                   placeholder="yourname@company.com"
                   {...field}
-                  className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                  className="bg-surface-highest text-slate-dark"
                 />
               </FormControl>
               <FormMessage className="text-xs" />
@@ -80,7 +93,7 @@ export default function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-[var(--color-slate-mid)]">
+              <FormLabel className="text-xs font-semibold tracking-widest uppercase text-slate-mid">
                 Password
               </FormLabel>
               <FormControl>
@@ -88,7 +101,7 @@ export default function LoginForm() {
                   type="password"
                   placeholder="Enter your password"
                   {...field}
-                  className="bg-[var(--color-surface-highest)] text-[var(--color-slate-dark)]"
+                  className="bg-surface-highest text-slate-dark"
                 />
               </FormControl>
               <FormMessage className="text-xs" />
@@ -98,18 +111,29 @@ export default function LoginForm() {
 
         {/* Remember Me & Forgot Password */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Checkbox id="remember" />
-            <Label
-              htmlFor="remember"
-              className="text-sm text-[var(--color-slate-mid)]"
-            >
-              Remember Me
-            </Label>
-          </div>
+          <FormField
+            control={form.control}
+            name="remember"
+            render={({ field }) => (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="remember"
+                  checked={field.value}
+                  onCheckedChange={(checked) => field.onChange(checked === true)}
+                  className="border-slate-mid/60"
+                />
+                <Label
+                  htmlFor="remember"
+                  className="text-sm font-semibold tracking-wider uppercase text-slate-dark"
+                >
+                  Remember Me
+                </Label>
+              </div>
+            )}
+          />
           <Link
             href="/forgot-password"
-            className="text-sm font-semibold text-[var(--color-primary)]"
+            className="text-sm font-semibold text-brand-primary"
           >
             Forgot Password?
           </Link>
@@ -118,23 +142,24 @@ export default function LoginForm() {
         {/* Submit */}
         <Button
           type="submit"
-          disabled={isPending}
-          className="w-full py-6 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:opacity-90 disabled:opacity-70 transition-all"
+          disabled={isBusy}
+          className="w-full rounded-lg bg-brand-primary py-6 font-semibold text-white transition-all hover:opacity-90 disabled:opacity-70"
         >
-          <span className="inline-flex items-center gap-2">
-            <span>
-              {/* Mobile */}
-              <span className=" flex md:hidden">
-                Sign In
-                <MoveRight className="ms-1" />
-              </span>
-
-              {/* DeskTop */}
-              <span className="hidden md:inline">
-                Log In
-                {isPending && <Loader2 className="h-5 w-5 animate-spin" />}
-              </span>
-            </span>
+          <span className="inline-flex min-h-5 items-center justify-center gap-2">
+            {isBusy ? (
+              <>
+                <Loader2 className="h-5 w-5 shrink-0 animate-spin" aria-hidden />
+                <span>Log In…</span>
+              </>
+            ) : (
+              <>
+                <span className="inline-flex items-center md:hidden">
+                  Sign In
+                  <MoveRight className="ms-1 h-4 w-4" aria-hidden />
+                </span>
+                <span className="hidden md:inline">Log In</span>
+              </>
+            )}
           </span>
         </Button>
       </form>

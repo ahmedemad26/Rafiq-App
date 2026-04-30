@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  redirect("/projects");
+  redirect("/project");
 }
