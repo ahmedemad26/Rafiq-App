@@ -3,11 +3,12 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays } from "lucide-react";
+import { TASK_STATUSES, taskStatusLabel } from "@/lib/constants/task-status";
 import { cn } from "@/lib/utils/utils";
 import type { TaskCardProps } from "../types/tasks-board-view.type";
 import { formatDueDateShort, initialsFromName } from "./tasks-board-view.utils";
 
-export default function TaskCard({ task, status, onOpenTask }: TaskCardProps) {
+export default function TaskCard({ task, status, onOpenTask, onChangeTaskStatus }: TaskCardProps) {
   const assigneeName = task.assignee_name?.trim() || "Unassigned";
   const assigneeAvatar = task.assignee_avatar?.trim() || null;
   const {
@@ -75,6 +76,25 @@ export default function TaskCard({ task, status, onOpenTask }: TaskCardProps) {
             initialsFromName(assigneeName)
           )}
         </span>
+      </div>
+      <div className="mt-2 sm:hidden">
+        <select
+          value={status}
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+          onChange={(event) => {
+            const nextStatus = event.target.value;
+            if (nextStatus === status) return;
+            onChangeTaskStatus(task.id, status, nextStatus as typeof status);
+          }}
+          className="h-8 w-full rounded-md border border-slate-200 bg-slate-50 px-2 text-[11px] font-semibold text-slate-700"
+        >
+          {TASK_STATUSES.map((item) => (
+            <option key={item} value={item}>
+              {taskStatusLabel(item)}
+            </option>
+          ))}
+        </select>
       </div>
     </article>
   );

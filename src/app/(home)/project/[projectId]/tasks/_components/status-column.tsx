@@ -16,6 +16,7 @@ export default function StatusColumn({
   status,
   onOpenTask,
   searchTerm,
+  onChangeTaskStatus,
 }: StatusColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${status}`,
@@ -96,6 +97,7 @@ export default function StatusColumn({
                 task={task}
                 status={status}
                 onOpenTask={onOpenTask}
+                onChangeTaskStatus={onChangeTaskStatus}
               />
             ))}
           </SortableContext>

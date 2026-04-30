@@ -19,12 +19,14 @@ export type StatusColumnProps = {
   status: TaskStatus;
   onOpenTask: (taskId: string) => void;
   searchTerm: string;
+  onChangeTaskStatus: (taskId: string, fromStatus: TaskStatus, toStatus: TaskStatus) => void;
 };
 
 export type TaskCardProps = {
   task: ProjectTask;
   status: TaskStatus;
   onOpenTask: (taskId: string) => void;
+  onChangeTaskStatus: (taskId: string, fromStatus: TaskStatus, toStatus: TaskStatus) => void;
 };
 
 export type TasksBoardHeaderProps = {

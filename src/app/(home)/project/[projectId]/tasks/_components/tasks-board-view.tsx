@@ -156,6 +156,11 @@ export default function TasksBoardView({
     moveTaskMutation.mutate({ taskId, fromStatus, toStatus });
   };
 
+  const handleQuickStatusChange = (taskId: string, fromStatus: TaskStatus, toStatus: TaskStatus) => {
+    if (fromStatus === toStatus) return;
+    moveTaskMutation.mutate({ taskId, fromStatus, toStatus });
+  };
+
   return (
     <section className="space-y-5">
       <TaskDetailsDialog
@@ -184,6 +189,7 @@ export default function TasksBoardView({
                 status={status}
                 onOpenTask={(taskId) => setSelectedTaskId(taskId)}
                 searchTerm={debouncedSearchValue}
+                onChangeTaskStatus={handleQuickStatusChange}
               />
             ))}
           </div>
