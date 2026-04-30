@@ -23,7 +23,20 @@ export async function getProjectEpics(
       return { error: "Unauthorized. Please login again." };
     }
 
-    const url = new URL(`${process.env.SUPABASE_URL}/rest/v1/project_epics`);
+    const supabaseUrl =
+      process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey =
+      process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl) {
+      return { error: "Missing Supabase URL configuration." };
+    }
+
+    if (!supabaseAnonKey) {
+      return { error: "Missing Supabase anon key configuration." };
+    }
+
+    const url = new URL(`${supabaseUrl}/rest/v1/project_epics`);
     url.searchParams.set("project_id", `eq.${projectId}`);
     if (searchTerm?.trim()) {
       url.searchParams.set("title", `ilike.%${searchTerm.trim()}%`);
@@ -37,7 +50,7 @@ export async function getProjectEpics(
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        apikey: process.env.SUPABASE_ANON_KEY!,
+        apikey: supabaseAnonKey,
         Authorization: `Bearer ${accessToken}`,
         Prefer: "count=exact",
       },

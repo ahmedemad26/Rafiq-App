@@ -17,6 +17,7 @@ type ProjectEpicsListContentProps = {
   projectId: string;
   epics: ProjectEpic[];
   searchValue: string;
+  errorMessage?: string;
   isPending: boolean;
   isError: boolean;
   isMobile: boolean;
@@ -124,6 +125,7 @@ export default function ProjectEpicsListContent({
   projectId,
   epics,
   searchValue,
+  errorMessage,
   isPending,
   isError,
   isMobile,
@@ -174,7 +176,10 @@ export default function ProjectEpicsListContent({
       />
       {isPending ? <EpicsLoadingState /> : null}
       {!isPending && isError ? (
-        <EpicsErrorState message={hasSearch ? "Failed to search epics" : "Failed to load epics"} onRetry={onRetry} />
+        <EpicsErrorState
+          message={errorMessage || (hasSearch ? "Failed to search epics" : "Failed to load epics")}
+          onRetry={onRetry}
+        />
       ) : null}
       {showEmpty ? (
         <EpicsEmptyState

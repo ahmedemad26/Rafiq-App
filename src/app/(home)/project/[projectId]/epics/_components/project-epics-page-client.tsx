@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useRouter } from "next/navigation";
 import { useProjectDetails } from "../../edit/_hooks/use-project-details";
 import {
   PROJECT_EPICS_PAGE_SIZE,
@@ -19,6 +20,7 @@ type ProjectEpicsPageClientProps = {
 };
 
 export default function ProjectEpicsPageClient({ projectId }: ProjectEpicsPageClientProps) {
+  const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearchValue, setDebouncedSearchValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,6 +32,7 @@ export default function ProjectEpicsPageClient({ projectId }: ProjectEpicsPageCl
     isPending: isPagedPending,
     isFetching: isPagedFetching,
     isError: isPagedError,
+    error: pagedError,
     refetch: refetchPaged,
   } = useProjectEpicsPageQuery({
     projectId,
@@ -43,6 +46,7 @@ export default function ProjectEpicsPageClient({ projectId }: ProjectEpicsPageCl
     isPending: isInfinitePending,
     isFetching: isInfiniteFetching,
     isError: isInfiniteError,
+    error: infiniteError,
     refetch: refetchInfinite,
     fetchNextPage,
     hasNextPage,
@@ -89,8 +93,25 @@ export default function ProjectEpicsPageClient({ projectId }: ProjectEpicsPageCl
   const isPending = isMobile ? isInfinitePending : isPagedPending;
   const isError = isMobile ? isInfiniteError : isPagedError;
   const isFetching = isMobile ? isInfiniteFetching : isPagedFetching;
+  const errorMessage = useMemo(() => {
+    const activeError = isMobile ? infiniteError : pagedError;
+    return activeError instanceof Error ? activeError.message : "Failed to load epics";
+  }, [infiniteError, isMobile, pagedError]);
   const isSearchDebouncing = searchValue.trim() !== debouncedSearchValue;
   const refetch = isMobile ? refetchInfinite : refetchPaged;
+
+  useEffect(() => {
+    if (!isError) return;
+    const normalized = errorMessage.toLowerCase();
+    const isAuthError =
+      normalized.includes("jwt expired") ||
+      normalized.includes("unauthorized");
+
+    if (!isAuthError) return;
+
+    const callback = encodeURIComponent(`/project/${projectId}/epics`);
+    router.replace(`/login?callbackUrl=${callback}`);
+  }, [errorMessage, isError, projectId, router]);
 
   return (
     <section className="-mx-6 -mt-6 flex min-h-[calc(100svh-8rem)] flex-col overflow-x-hidden bg-[#F4F7FA] px-6 pb-16 pt-0">
@@ -136,6 +157,7 @@ export default function ProjectEpicsPageClient({ projectId }: ProjectEpicsPageCl
         projectId={projectId}
         epics={epics}
         searchValue={debouncedSearchValue}
+        errorMessage={errorMessage}
         isPending={isPending}
         isError={isError}
         isMobile={isMobile}
