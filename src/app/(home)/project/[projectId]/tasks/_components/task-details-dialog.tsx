@@ -144,7 +144,7 @@ export default function TaskDetailsDialog({
   const status = normalizeStatus(task?.status ?? null);
   const taskWithAssigneeId = task as (typeof task & { assignee_id?: string | null }) | null;
   const currentAssigneeId = taskWithAssigneeId?.assignee_id?.trim() || "";
-  const assignableMembers = members.filter((m: ProjectMember) => Boolean(m.id));
+  const assignableMembers = members.filter((m: ProjectMember) => Boolean(m.userId));
   const currentAssignee =
     assignableMembers.find((m) => m.id === currentAssigneeId || (m.userId ?? "") === currentAssigneeId) ??
     assignableMembers.find((m) => normalizeName(m.name) === normalizeName(task?.assignee_name));
@@ -323,7 +323,7 @@ export default function TaskDetailsDialog({
                         <button
                           key={member.id}
                           type="button"
-                          onClick={() => void handleAssigneeChange(member.id)}
+                          onClick={() => void handleAssigneeChange(member.userId)}
                           className={cn(
                             "w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
                             isActive ? "bg-slate-50 font-semibold text-[#003380]" : "text-slate-700",
