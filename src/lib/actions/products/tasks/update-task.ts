@@ -31,7 +31,11 @@ function buildPatchBody(patch: UpdateTaskPatch): Record<string, unknown> | null 
   return Object.keys(body).length > 0 ? body : null;
 }
 
-export async function updateTask(taskId: string, patch: UpdateTaskPatch): Promise<UpdateTaskResult> {
+export async function updateTask(
+  taskId: string,
+  patch: UpdateTaskPatch,
+  taskPublicId?: string | null,
+): Promise<UpdateTaskResult> {
   if (!taskId?.trim()) return { error: "Task id is required." };
 
   const body = buildPatchBody(patch);
@@ -48,27 +52,51 @@ export async function updateTask(taskId: string, patch: UpdateTaskPatch): Promis
     if (supabase.error) return { error: supabase.error };
     if (!supabase.url || !supabase.anonKey) return { error: "Missing Supabase configuration." };
 
-    const url = new URL(`${supabase.url}/rest/v1/tasks`);
-    url.searchParams.set("id", `eq.${taskId}`);
+    const updateOnce = async (column: "id" | "task_id", value: string) => {
+      const url = new URL(`${supabase.url}/rest/v1/tasks`);
+      url.searchParams.set(column, `eq.${value}`);
+      url.searchParams.set("select", "id");
 
-    const res = await fetch(url.toString(), {
-      method: "PATCH",
-      headers: buildSupabaseHeaders(accessToken, supabase.anonKey),
-      body: JSON.stringify(body),
-      cache: "no-store",
-    });
+      const res = await fetch(url.toString(), {
+        method: "PATCH",
+        headers: buildSupabaseHeaders(accessToken, supabase.anonKey, {
+          Prefer: "return=representation",
+        }),
+        body: JSON.stringify(body),
+        cache: "no-store",
+      });
 
-    if (res.ok) {
+      const { data, parseError } = await parseJsonResponseBody(res);
+      if (parseError) return { error: parseError, updated: 0 };
+      if (!res.ok) {
+        return {
+          error: extractErrorMessage(data, "Failed to update task"),
+          updated: 0,
+        };
+      }
+
+      const updated = Array.isArray(data) ? data.length : 0;
+      return { updated, error: "" };
+    };
+
+    const byId = await updateOnce("id", taskId.trim());
+    if (byId.error) return { error: byId.error };
+    if (byId.updated > 0) {
       revalidateTag("tasks");
       return { success: true };
     }
 
-    const { data, parseError } = await parseJsonResponseBody(res);
-    if (parseError) return { error: parseError };
+    const publicId = taskPublicId?.trim();
+    if (publicId) {
+      const byTaskId = await updateOnce("task_id", publicId);
+      if (byTaskId.error) return { error: byTaskId.error };
+      if (byTaskId.updated > 0) {
+        revalidateTag("tasks");
+        return { success: true };
+      }
+    }
 
-    return {
-      error: extractErrorMessage(data, "Failed to update task"),
-    };
+    return { error: "Task was not found for update." };
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : NETWORK_ERROR_MESSAGE,
