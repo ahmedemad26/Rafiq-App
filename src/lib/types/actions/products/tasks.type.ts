@@ -1,6 +1,11 @@
 import type { ProjectTask } from "@/lib/types/project-tasks";
 
 export type UpdateTaskStatusResult = { error: string } | { success: true };
+export type UpdateTaskPatch = {
+  status?: string;
+  assignee_id?: string | null;
+};
+export type UpdateTaskResult = { error: string } | { success: true };
 
 export type GetProjectTaskDetailsResult = { error: string } | { data: ProjectTask | null };
 

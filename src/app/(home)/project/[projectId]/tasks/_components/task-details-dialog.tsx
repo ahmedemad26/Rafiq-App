@@ -1,10 +1,17 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { ChevronDown, Link2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { TaskStatus } from "@/lib/constants/task-status";
 import { TASK_STATUSES, taskStatusLabel } from "@/lib/constants/task-status";
+import { updateTask } from "@/lib/actions/products/tasks/update-task";
+import { queryKeys } from "@/lib/state/query-keys";
+import type { ProjectMember } from "@/lib/types/member";
 import { cn } from "@/lib/utils/utils";
+import { useProjectMembers } from "../../members/_hooks/use-project-members";
 import { useProjectTaskDetails } from "../_hooks/use-project-task-details";
 
 type TaskDetailsDialogProps = {
@@ -85,19 +92,91 @@ function PersonRow({
   );
 }
 
+function normalizeName(value: string | null | undefined): string {
+  return value?.trim().toLowerCase() ?? "";
+}
+
 export default function TaskDetailsDialog({
   projectId,
   taskId,
   open,
   onOpenChange,
 }: TaskDetailsDialogProps) {
+  const queryClient = useQueryClient();
   const { data: task, isPending, isError } = useProjectTaskDetails({
     projectId,
     taskId,
     enabled: open,
   });
+  const { data: members = [], isPending: isMembersPending } = useProjectMembers(projectId);
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  const updateMutation = useMutation({
+    mutationFn: async (patch: { status?: TaskStatus; assignee_id?: string | null }) => {
+      if (!task?.id) throw new Error("Task id is missing.");
+      const result = await updateTask(task.id, patch);
+      if ("error" in result) throw new Error(result.error);
+      return true;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.root, "tasks"] });
+      void queryClient.invalidateQueries({
+        queryKey: [...queryKeys.projects.root, "tasks", "details", projectId, taskId],
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!statusMenuOpen && !assigneeMenuOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const el = popoverRef.current;
+      if (el && !el.contains(event.target as Node)) {
+        setStatusMenuOpen(false);
+        setAssigneeMenuOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [statusMenuOpen, assigneeMenuOpen]);
 
   const status = normalizeStatus(task?.status ?? null);
+  const taskWithAssigneeId = task as (typeof task & { assignee_id?: string | null }) | null;
+  const currentAssigneeId = taskWithAssigneeId?.assignee_id?.trim() || "";
+  const assignableMembers = members.filter((m: ProjectMember) => Boolean(m.userId));
+  const currentAssignee =
+    assignableMembers.find((m) => (m.userId ?? "") === currentAssigneeId) ??
+    assignableMembers.find((m) => normalizeName(m.name) === normalizeName(task?.assignee_name));
+
+  const handleStatusChange = async (nextStatus: TaskStatus) => {
+    if (nextStatus === status || updateMutation.isPending) {
+      setStatusMenuOpen(false);
+      return;
+    }
+    setStatusMenuOpen(false);
+    try {
+      await updateMutation.mutateAsync({ status: nextStatus });
+      toast.success("Status updated.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update status.");
+    }
+  };
+
+  const handleAssigneeChange = async (assigneeId: string | null) => {
+    if (updateMutation.isPending) return;
+    if ((assigneeId ?? "") === currentAssigneeId) {
+      setAssigneeMenuOpen(false);
+      return;
+    }
+    setAssigneeMenuOpen(false);
+    try {
+      await updateMutation.mutateAsync({ assignee_id: assigneeId });
+      toast.success("Assignee updated.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update assignee.");
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -167,25 +246,94 @@ export default function TaskDetailsDialog({
               </div>
             </section>
 
-            <aside className="space-y-6 bg-[#EEF1FB] p-6">
-              <div>
+            <aside className="space-y-6 bg-[#EEF1FB] p-6" ref={popoverRef}>
+              <div className="relative">
                 <p className="text-[10px] font-bold tracking-[0.08em] text-slate-400 uppercase">Status</p>
-                <span
+                <button
+                  type="button"
+                  disabled={updateMutation.isPending}
+                  onClick={() => {
+                    setAssigneeMenuOpen(false);
+                    setStatusMenuOpen((prev) => !prev);
+                  }}
                   className={cn(
                     "mt-2 inline-flex w-full items-center justify-between rounded-sm px-3 py-2 text-[10px] font-bold tracking-[0.08em] uppercase",
                     statusBadgeClass(status),
+                    updateMutation.isPending && "cursor-not-allowed opacity-60",
                   )}
                 >
                   <span>{status ? taskStatusLabel(status) : "Unknown"}</span>
                   <ChevronDown className="size-3.5" />
-                </span>
+                </button>
+                {statusMenuOpen ? (
+                  <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
+                    {TASK_STATUSES.map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => void handleStatusChange(item)}
+                        className={cn(
+                          "flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold uppercase hover:bg-slate-50",
+                          status === item ? "bg-slate-50 text-[#003380]" : "text-slate-700",
+                        )}
+                      >
+                        {taskStatusLabel(item)}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
-              <PersonRow
-                label="Assignee"
-                name={task.assignee_name?.trim() || "Unassigned"}
-                avatar={task.assignee_avatar?.trim() || null}
-              />
+              <div className="relative">
+                <button
+                  type="button"
+                  disabled={updateMutation.isPending}
+                  onClick={() => {
+                    setStatusMenuOpen(false);
+                    setAssigneeMenuOpen((prev) => !prev);
+                  }}
+                  className={cn(
+                    "w-full rounded-md p-0 text-left",
+                    updateMutation.isPending && "cursor-not-allowed opacity-60",
+                  )}
+                >
+                  <PersonRow
+                    label="Assignee"
+                    name={task.assignee_name?.trim() || "Unassigned"}
+                    avatar={task.assignee_avatar?.trim() || null}
+                  />
+                </button>
+                {assigneeMenuOpen ? (
+                  <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 max-h-56 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => void handleAssigneeChange(null)}
+                      className="w-full px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Unassigned
+                    </button>
+                    {isMembersPending ? (
+                      <p className="px-3 py-2 text-xs text-slate-500">Loading members…</p>
+                    ) : null}
+                    {assignableMembers.map((member) => {
+                      const isActive = member.userId === (currentAssignee?.userId ?? "");
+                      return (
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() => void handleAssigneeChange(member.userId)}
+                          className={cn(
+                            "w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
+                            isActive ? "bg-slate-50 font-semibold text-[#003380]" : "text-slate-700",
+                          )}
+                        >
+                          {member.name?.trim() || member.email || "Member"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
 
               <PersonRow
                 label="Reporter"
