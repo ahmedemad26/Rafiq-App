@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Taskly
+
+Taskly is a project and task management web app built with Next.js (App Router), TypeScript, React Query, and Supabase.
+
+## Features
+
+- Auth flows (login, signup, forgot/reset password)
+- Projects management (create, edit, list)
+- Task board and list views
+- Drag-and-drop task status updates
+- Epics and members management
+- Invitation flow for joining projects
+
+## Tech Stack
+
+- Next.js 15 (App Router)
+- React 19 + TypeScript
+- Tailwind CSS 4
+- React Query
+- NextAuth
+- Supabase (REST/RPC)
+- dnd-kit (drag & drop)
+- shadcn/ui + Radix UI + Sonner
+
+## Project Structure
+
+```txt
+src/
+  app/                    # Routes and page-level components
+  components/             # Shared UI and providers
+  lib/
+    actions/              # Server actions
+    types/                # Shared types
+    schemes/              # Zod schemas
+```
+
+## Prerequisites
+
+- Node.js 18+ (recommended latest LTS)
+- Yarn 1.x
+
+## Environment Variables
+
+Create `.env.local` for local development and `.env.production` for production:
+
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_nextauth_secret
+```
+
+For production, use:
+
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXTAUTH_URL=https://your-domain.com
+NEXTAUTH_SECRET=your_nextauth_secret
+```
+
+You can start from `.env.production.example`.
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+yarn install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run development server:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+yarn dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `yarn dev` - Start dev server
+- `yarn build` - Production build
+- `yarn start` - Run production server
+- `yarn lint` - Run ESLint
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Quality Checks
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Before pushing changes:
 
-## Deploy on Vercel
+```bash
+yarn lint
+yarn build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Type files are organized under feature-level `types` folders and `src/lib/types`.
+- The app uses server actions for most data operations against Supabase.
