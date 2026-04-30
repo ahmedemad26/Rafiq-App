@@ -4,8 +4,10 @@ import { RegisterValues } from '../schemes/register-schema';
 import { AuthResponse, ApiResponse } from '../types/auth';
 
 export async function registerAction(values: RegisterValues): Promise<ApiResponse<AuthResponse>> {
-  const supabaseUrl = process.env.SUPABASE_URL?.trim();
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY?.trim();
+  const supabaseUrl =
+    process.env.SUPABASE_URL?.trim() ?? process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseAnonKey =
+    process.env.SUPABASE_ANON_KEY?.trim() ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return {
