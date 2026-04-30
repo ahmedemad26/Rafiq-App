@@ -144,9 +144,9 @@ export default function TaskDetailsDialog({
   const status = normalizeStatus(task?.status ?? null);
   const taskWithAssigneeId = task as (typeof task & { assignee_id?: string | null }) | null;
   const currentAssigneeId = taskWithAssigneeId?.assignee_id?.trim() || "";
-  const assignableMembers = members.filter((m: ProjectMember) => Boolean(m.userId));
+  const assignableMembers = members.filter((m: ProjectMember) => Boolean(m.id));
   const currentAssignee =
-    assignableMembers.find((m) => (m.userId ?? "") === currentAssigneeId) ??
+    assignableMembers.find((m) => m.id === currentAssigneeId || (m.userId ?? "") === currentAssigneeId) ??
     assignableMembers.find((m) => normalizeName(m.name) === normalizeName(task?.assignee_name));
 
   const handleStatusChange = async (nextStatus: TaskStatus) => {
@@ -316,12 +316,14 @@ export default function TaskDetailsDialog({
                       <p className="px-3 py-2 text-xs text-slate-500">Loading members…</p>
                     ) : null}
                     {assignableMembers.map((member) => {
-                      const isActive = member.userId === (currentAssignee?.userId ?? "");
+                      const isActive =
+                        member.id === (currentAssignee?.id ?? "") ||
+                        member.userId === (currentAssignee?.userId ?? "");
                       return (
                         <button
                           key={member.id}
                           type="button"
-                          onClick={() => void handleAssigneeChange(member.userId)}
+                          onClick={() => void handleAssigneeChange(member.id)}
                           className={cn(
                             "w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
                             isActive ? "bg-slate-50 font-semibold text-[#003380]" : "text-slate-700",
