@@ -8,7 +8,9 @@ export type ProjectTask = {
   description?: string | null;
   due_date: string | null;
   created_at?: string | null;
+  assignee_id?: string | null;
   assignee_name: string | null;
+  assignee_email?: string | null;
   assignee_avatar: string | null;
   reporter_name?: string | null;
   reporter_avatar?: string | null;

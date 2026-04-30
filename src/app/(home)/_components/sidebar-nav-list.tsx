@@ -34,7 +34,7 @@ export function SidebarNavList({ navItems, onItemClick }: SidebarNavListProps) {
               <Link
                 href={item.href}
                 className="flex items-center gap-3"
-                onClick={(event) => {
+                onClick={() => {
                   onItemClick?.()
                 }}
               >

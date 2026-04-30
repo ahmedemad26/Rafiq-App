@@ -5,6 +5,9 @@ import { getSupabaseConfig } from "@/lib/actions/products/_utils/supabase-reques
 import { type ProjectMember } from "@/lib/types/member";
 import { getServerSession } from "next-auth";
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
 }
@@ -31,6 +34,16 @@ function normalizeRole(value: unknown): ProjectMember["role"] {
   if (role === "admin") return "Admin";
   if (role === "viewer") return "Viewer";
   return "Member";
+}
+
+function pickUuid(source: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value !== "string") continue;
+    const normalized = value.trim();
+    if (UUID_REGEX.test(normalized)) return normalized;
+  }
+  return null;
 }
 
 export async function getProjectMembers(projectId: string) {
@@ -87,41 +100,53 @@ export async function getProjectMembers(projectId: string) {
     }
 
     const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
-    const members: ProjectMember[] = rows.map((row, index) => ({
-      ...(() => {
-        const user = asRecord(row.user);
-        const profile = asRecord(row.profile);
-        const member = asRecord(row.member);
+    const members = rows.map((row, index) => {
+      const user = asRecord(row.user);
+      const profile = asRecord(row.profile);
+      const member = asRecord(row.member);
 
-        const name =
-          pickFirstString(row, ["name", "full_name", "display_name", "user_name"]) ||
-          (user ? pickFirstString(user, ["name", "full_name", "display_name"]) : "") ||
-          (profile ? pickFirstString(profile, ["name", "full_name", "display_name"]) : "") ||
-          (member ? pickFirstString(member, ["name", "full_name", "display_name"]) : "");
+      const name =
+        pickFirstString(row, ["name", "full_name", "display_name", "user_name"]) ||
+        (user ? pickFirstString(user, ["name", "full_name", "display_name"]) : "") ||
+        (profile ? pickFirstString(profile, ["name", "full_name", "display_name"]) : "") ||
+        (member ? pickFirstString(member, ["name", "full_name", "display_name"]) : "");
 
-        const email =
-          pickFirstString(row, ["email", "user_email"]) ||
-          (user ? pickFirstString(user, ["email"]) : "") ||
-          (profile ? pickFirstString(profile, ["email"]) : "") ||
-          (member ? pickFirstString(member, ["email"]) : "");
+      const email =
+        pickFirstString(row, ["email", "user_email"]) ||
+        (user ? pickFirstString(user, ["email"]) : "") ||
+        (profile ? pickFirstString(profile, ["email"]) : "") ||
+        (member ? pickFirstString(member, ["email"]) : "");
 
-        return { name, email };
-      })(),
-      id: String(row.id ?? row.member_id ?? `${projectId}-${index}`),
-      userId:
-        row.user_id == null && row.userId == null
-          ? null
-          : String(row.user_id ?? row.userId ?? "").trim(),
-      role: normalizeRole(row.role),
-      avatarUrl:
-        typeof row.avatar_url === "string" && row.avatar_url.trim()
-          ? row.avatar_url.trim()
-          : typeof row.avatarUrl === "string" && row.avatarUrl.trim()
-            ? row.avatarUrl.trim()
-            : null,
-    }));
+      const userId =
+        pickUuid(row, ["user_id", "userId"]) ??
+        (user ? pickUuid(user, ["id", "user_id", "userId"]) : null) ??
+        (member ? pickUuid(member, ["user_id", "userId", "id"]) : null) ??
+        null;
 
-    return { data: members };
+      return {
+        id: String(row.id ?? row.member_id ?? userId ?? `${projectId}-${index}`),
+        userId,
+        name,
+        email,
+        role: normalizeRole(row.role),
+        avatarUrl:
+          typeof row.avatar_url === "string" && row.avatar_url.trim()
+            ? row.avatar_url.trim()
+            : typeof row.avatarUrl === "string" && row.avatarUrl.trim()
+              ? row.avatarUrl.trim()
+              : null,
+      } satisfies ProjectMember;
+    });
+
+    const deduped = Array.from(
+      members.reduce((acc, item) => {
+        const key = item.userId || item.email.toLowerCase() || item.id;
+        if (!acc.has(key)) acc.set(key, item);
+        return acc;
+      }, new Map<string, ProjectMember>()),
+    ).map((entry) => entry[1]);
+
+    return { data: deduped };
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "Network error. Please try again.",

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useProjectTasks } from "../_hooks/use-project-tasks";
+import { useProjectMembers } from "../../members/_hooks/use-project-members";
 import TaskDetailsDialog from "./task-details-dialog";
 import TasksListHeader from "./tasks-list-header";
 import TasksListTable from "./tasks-list-table";
@@ -30,6 +31,7 @@ export default function TasksListView({ projectId }: { projectId: string }) {
     pageSize: PAGE_SIZE,
     searchTerm: debouncedSearchValue,
   });
+  const { data: members = [] } = useProjectMembers(projectId);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const tasks = data?.data ?? [];
   const totalItems = data?.total ?? 0;
@@ -64,6 +66,7 @@ export default function TasksListView({ projectId }: { projectId: string }) {
       />
       <TasksListTable
         data={tasks}
+        members={members}
         totalItems={totalItems}
         isPending={isPending}
         isError={isError}

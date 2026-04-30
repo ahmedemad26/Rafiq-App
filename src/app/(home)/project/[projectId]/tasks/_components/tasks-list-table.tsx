@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TASK_STATUSES, type TaskStatus, taskStatusLabel } from "@/lib/constants/task-status";
+import type { ProjectMember } from "@/lib/types/member";
 import type { ProjectTask } from "@/lib/types/project-tasks";
 import { cn } from "@/lib/utils/utils";
 
@@ -14,6 +15,7 @@ type TasksListTableProps = {
   hasSearch: boolean;
   currentPage: number;
   pageSize: number;
+  members?: ProjectMember[];
   onPageChange: (page: number) => void;
   onOpenTask: (taskId: string) => void;
 };
@@ -53,9 +55,28 @@ function statusBadgeClass(status: TaskStatus | null) {
   return "bg-indigo-100 text-indigo-700";
 }
 
-function TaskRow({ task, onOpenTask }: { task: ProjectTask; onOpenTask: (taskId: string) => void }) {
-  const assigneeName = task.assignee_name?.trim() || "Unassigned";
-  const assigneeAvatar = task.assignee_avatar?.trim() || null;
+function TaskRow({
+  task,
+  members,
+  onOpenTask,
+}: {
+  task: ProjectTask;
+  members: ProjectMember[];
+  onOpenTask: (taskId: string) => void;
+}) {
+  const assignedMember =
+    members.find((member) => {
+      const memberUserId = member.userId?.trim();
+      const taskAssigneeId = task.assignee_id?.trim();
+      return Boolean(memberUserId && taskAssigneeId && memberUserId === taskAssigneeId);
+    }) ?? null;
+  const assigneeName =
+    assignedMember?.name?.trim() ||
+    assignedMember?.email?.trim() ||
+    task.assignee_name?.trim() ||
+    task.assignee_email?.trim() ||
+    "Unassigned";
+  const assigneeAvatar = assignedMember?.avatarUrl?.trim() || task.assignee_avatar?.trim() || null;
   const status = normalizedStatus(task.status);
 
   return (
@@ -121,6 +142,7 @@ export default function TasksListTable({
   hasSearch,
   currentPage,
   pageSize,
+  members = [],
   onPageChange,
   onOpenTask,
 }: TasksListTableProps) {
@@ -167,7 +189,7 @@ export default function TasksListTable({
               </tr>
             ) : null}
             {!isPending && !isError && data.map((task) => (
-              <TaskRow key={task.id} task={task} onOpenTask={onOpenTask} />
+              <TaskRow key={task.id} task={task} members={members} onOpenTask={onOpenTask} />
             ))}
           </tbody>
         </table>

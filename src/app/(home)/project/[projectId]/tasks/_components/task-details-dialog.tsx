@@ -299,8 +299,13 @@ export default function TaskDetailsDialog({
                 >
                   <PersonRow
                     label="Assignee"
-                    name={task.assignee_name?.trim() || "Unassigned"}
-                    avatar={task.assignee_avatar?.trim() || null}
+                    name={
+                      currentAssignee?.name?.trim() ||
+                      currentAssignee?.email?.trim() ||
+                      task.assignee_name?.trim() ||
+                      "Unassigned"
+                    }
+                    avatar={currentAssignee?.avatarUrl?.trim() || task.assignee_avatar?.trim() || null}
                   />
                 </button>
                 {assigneeMenuOpen ? (

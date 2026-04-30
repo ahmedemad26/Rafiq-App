@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import MembersBreadcrumb from "./members-breadcrumb";
 import { useProjectMembers } from "../_hooks/use-project-members";
+import { useProjectInvitations } from "../_hooks/use-project-invitations";
 import { MembersErrorState, MembersLoadingState } from "@/components/skeleton/member-skelton";
 import { UserPlus } from "lucide-react";
 import { MembersTable } from "./members-table";
 import InviteMemberDialog from "./invite-member-dialog";
+import { PendingInvitationsTable } from "./pending-invitations-table";
 
 type ProjectMembersPageClientProps = {
   projectId: string;
@@ -17,6 +19,12 @@ type ProjectMembersPageClientProps = {
 export default function ProjectMembersPageClient({ projectId }: ProjectMembersPageClientProps) {
   const router = useRouter();
   const { data, isPending, isError, error, refetch } = useProjectMembers(projectId);
+  const {
+    data: invitations,
+    isPending: isInvitationsPending,
+    isError: isInvitationsError,
+    error: invitationsError,
+  } = useProjectInvitations(projectId);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const errorMessage = useMemo(
     () => (error instanceof Error ? error.message : "Failed to load project members. Please try again."),
@@ -64,6 +72,20 @@ export default function ProjectMembersPageClient({ projectId }: ProjectMembersPa
         <MembersErrorState message={errorMessage} onRetry={() => void refetch()} />
       ) : null}
       {!isPending && !isError ? <MembersTable members={data ?? []} /> : null}
+      {!isPending && !isError && !isInvitationsPending ? (
+        <PendingInvitationsTable invitations={invitations ?? []} />
+      ) : null}
+      {!isPending && !isError && !isInvitationsPending && !isInvitationsError && (invitations ?? []).length === 0 ? (
+        <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white px-5 py-4 text-sm text-slate-500 shadow-[0_4px_24px_rgba(15,23,42,0.06)] sm:px-6">
+          No pending invitations for this project.
+        </div>
+      ) : null}
+      {!isPending && !isError && isInvitationsError ? (
+        <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700 sm:px-6">
+          Failed to load pending invitations:{" "}
+          {invitationsError instanceof Error ? invitationsError.message : "Unknown error"}
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -44,6 +44,9 @@ export default function InviteMemberDialog({
       await queryClient.invalidateQueries({
         queryKey: [...queryKeys.projects.root, "members", projectId],
       });
+      await queryClient.invalidateQueries({
+        queryKey: [...queryKeys.projects.root, "invitations", projectId],
+      });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to send invitation");
