@@ -1,8 +1,15 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
-const protectedRoutes = ["/"];
+const protectedRoutes = ["/", "/project"];
 const authRoutes = ["/login", "/signup", "/forgot-password", "/reset-password"];
+
+function isProtectedRoute(path: string): boolean {
+  return protectedRoutes.some((route) => {
+    if (route === "/") return path === "/";
+    return path === route || path.startsWith(`${route}/`);
+  });
+}
 
 function parseJwtExp(accessToken: string): number | null {
   try {
@@ -58,7 +65,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   // Protect app routes from unauthenticated access.
-  if (protectedRoutes.some((route) => path.startsWith(route)) && !isAuthenticated) {
+  if (isProtectedRoute(path) && !isAuthenticated) {
     return redirectToLogin(req);
   }
 
