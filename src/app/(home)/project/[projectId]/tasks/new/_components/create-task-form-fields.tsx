@@ -26,6 +26,20 @@ function formatEpicOptionLabel(epic: ProjectEpic): string {
   return `${id} ${title}`.trim();
 }
 
+function getMemberOptionLabel(member: { name: string; email: string }): string {
+  const name = member.name.trim();
+  const email = member.email.trim();
+
+  if (name && email) return `${name} (${email})`;
+  if (name) return name;
+  if (email) return email;
+  return "Unknown member";
+}
+
+function getMemberAssigneeValue(member: { id: string; userId: string | null }): string {
+  return member.userId?.trim() || "";
+}
+
 export default function CreateTaskFormFields({
   form,
   epics,
@@ -129,10 +143,10 @@ export default function CreateTaskFormFields({
                         {members.map((member) => (
                           <option
                             key={member.id}
-                            value={member.userId ?? ""}
-                            disabled={!member.userId}
+                            value={getMemberAssigneeValue(member)}
+                            disabled={!member.userId?.trim()}
                           >
-                            {member.name}
+                            {getMemberOptionLabel(member)}
                           </option>
                         ))}
                       </select>

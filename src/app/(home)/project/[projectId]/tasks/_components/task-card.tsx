@@ -2,77 +2,48 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useSession } from "next-auth/react";
 import { CalendarDays } from "lucide-react";
 import { TASK_STATUSES, taskStatusLabel } from "@/lib/constants/task-status";
-import { cn } from "@/lib/utils/utils";
+import { cn, getInitials } from "@/lib/utils/utils";
 import type { ProjectMember } from "@/lib/types/member";
 import type { TaskCardProps } from "../types/tasks-board-view.type";
-import { formatDueDateShort, initialsFromName } from "./tasks-board-view.utils";
+import { formatDueDateShort } from "./tasks-board-view.utils";
 
-function normalizeName(value: string | null | undefined): string {
-  return value?.trim().toLowerCase() ?? "";
-}
-
-function displayNameFromEmail(email: string): string {
-  const localPart = email.split("@")[0] ?? "";
-  if (!localPart.trim()) return email;
-  return localPart
+function nameFromEmail(email: string): string {
+  const local = email.split("@")[0]?.trim() ?? "";
+  if (!local) return email;
+  return local
     .split(/[._-]+/)
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 }
 
-type SessionUserLike = {
-  email?: string | null;
-  name?: string | null;
-  user_metadata?: { name?: string | null };
-};
-
-function normalizeEmail(value: string | null | undefined): string {
-  return value?.trim().toLowerCase() ?? "";
-}
-
 function resolveAssignedMember(task: TaskCardProps["task"], members: ProjectMember[]): ProjectMember | null {
   const taskAssigneeId = task.assignee_id?.trim() ?? "";
-  const taskAssigneeName = normalizeName(task.assignee_name);
-  const taskAssigneeEmail = normalizeEmail(task.assignee_email);
 
   return (
     members.find(
       (member) =>
         Boolean(
-          taskAssigneeId && (member.id === taskAssigneeId || (member.userId?.trim() ?? "") === taskAssigneeId),
+          taskAssigneeId &&
+            ((member.userId?.trim() ?? "") === taskAssigneeId || member.id.trim() === taskAssigneeId),
         ),
-    ) ??
-    members.find((member) => normalizeName(member.name) === taskAssigneeName) ??
-    members.find((member) => normalizeEmail(member.email) === taskAssigneeEmail) ??
-    null
+    ) ?? null
   );
 }
 
 function resolveAssigneeName(
   task: TaskCardProps["task"],
   assignedMember: ProjectMember | null,
-  user: SessionUserLike | undefined,
 ): string {
-  const taskAssigneeEmail = normalizeEmail(task.assignee_email);
-  const memberEmail = normalizeEmail(assignedMember?.email);
-  const sessionEmail = normalizeEmail(user?.email);
-  const sessionName = user?.user_metadata?.name?.trim() || user?.name?.trim() || "";
-
-  const fallbackEmail = assignedMember?.email?.trim() || task.assignee_email?.trim() || "";
-  const isCurrentUserAssignee =
-    Boolean(sessionEmail) &&
-    Boolean(taskAssigneeEmail || memberEmail) &&
-    (sessionEmail === taskAssigneeEmail || sessionEmail === memberEmail);
-
+  const memberEmail = assignedMember?.email?.trim() ?? "";
+  const taskEmail = task.assignee_email?.trim() ?? "";
   return (
     assignedMember?.name?.trim() ||
+    (memberEmail ? nameFromEmail(memberEmail) : "") ||
     task.assignee_name?.trim() ||
-    (isCurrentUserAssignee ? sessionName : "") ||
-    (fallbackEmail ? displayNameFromEmail(fallbackEmail) : "") ||
+    (taskEmail ? nameFromEmail(taskEmail) : "") ||
     "Unassigned"
   );
 }
@@ -84,9 +55,8 @@ export default function TaskCard({
   onOpenTask,
   onChangeTaskStatus,
 }: TaskCardProps) {
-  const { data: session } = useSession();
   const assignedMember = resolveAssignedMember(task, members);
-  const assigneeName = resolveAssigneeName(task, assignedMember, session?.user);
+  const assigneeName = resolveAssigneeName(task, assignedMember);
   const assigneeAvatar = assignedMember?.avatarUrl?.trim() || task.assignee_avatar?.trim() || null;
   const {
     attributes,
@@ -151,7 +121,7 @@ export default function TaskCard({
                 aria-hidden
               />
             ) : (
-              initialsFromName(assigneeName)
+              getInitials(assigneeName)
             )}
           </span>
 

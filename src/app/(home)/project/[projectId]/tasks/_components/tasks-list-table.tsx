@@ -55,6 +55,16 @@ function statusBadgeClass(status: TaskStatus | null) {
   return "bg-indigo-100 text-indigo-700";
 }
 
+function nameFromEmail(email: string): string {
+  const local = email.split("@")[0]?.trim() ?? "";
+  if (!local) return email;
+  return local
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function TaskRow({
   task,
   members,
@@ -67,14 +77,18 @@ function TaskRow({
   const assignedMember =
     members.find((member) => {
       const memberUserId = member.userId?.trim();
+      const memberId = member.id?.trim();
       const taskAssigneeId = task.assignee_id?.trim();
-      return Boolean(memberUserId && taskAssigneeId && memberUserId === taskAssigneeId);
+      return Boolean(
+        taskAssigneeId &&
+          ((memberUserId && memberUserId === taskAssigneeId) || (memberId && memberId === taskAssigneeId)),
+      );
     }) ?? null;
   const assigneeName =
     assignedMember?.name?.trim() ||
-    assignedMember?.email?.trim() ||
+    (assignedMember?.email?.trim() ? nameFromEmail(assignedMember.email) : "") ||
     task.assignee_name?.trim() ||
-    task.assignee_email?.trim() ||
+    (task.assignee_email?.trim() ? nameFromEmail(task.assignee_email) : "") ||
     "Unassigned";
   const assigneeAvatar = assignedMember?.avatarUrl?.trim() || task.assignee_avatar?.trim() || null;
   const status = normalizedStatus(task.status);

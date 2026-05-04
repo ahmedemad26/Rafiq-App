@@ -21,6 +21,10 @@ function pickString(row: Record<string, unknown>, keys: string[]): string | null
   return null;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+}
+
 export async function getProjectTasksByStatus(
   projectId: string,
   status: TaskStatus,
@@ -69,24 +73,54 @@ export async function getProjectTasksByStatus(
     }
 
     const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
-    const tasks: ProjectTask[] = rows.map((row) => ({
-      id: String(row.id ?? ""),
-      project_id: pickString(row, ["project_id"]),
-      task_id: pickString(row, ["task_id"]),
-      title: pickString(row, ["title"]),
-      description: pickString(row, ["description"]),
-      due_date: pickString(row, ["due_date"]),
-      created_at: pickString(row, ["created_at"]),
-      assignee_id: pickString(row, ["assignee_id", "assignee_user_id", "assigned_to", "user_id"]),
-      assignee_name: pickString(row, ["assignee_name", "assignee_full_name", "assigned_to_name"]),
-      assignee_email: pickString(row, ["assignee_email", "assignee_mail", "assigned_to_email"]),
-      assignee_avatar: pickString(row, ["assignee_avatar", "assignee_avatar_url", "assignee_image"]),
-      reporter_name: pickString(row, ["reporter_name", "creator_name", "created_by_name"]),
-      reporter_avatar: pickString(row, ["reporter_avatar", "creator_avatar", "created_by_avatar"]),
-      epic_id: pickString(row, ["epic_id"]),
-      priority: pickString(row, ["priority"]),
-      status: pickString(row, ["status"]) as TaskStatus | null,
-    }));
+    const tasks: ProjectTask[] = rows.map((row) => {
+      const assigneeObj = asRecord(row.assignee) ?? asRecord(row.user) ?? asRecord(row.member);
+      return {
+        id: String(row.id ?? ""),
+        project_id: pickString(row, ["project_id"]),
+        task_id: pickString(row, ["task_id"]),
+        title: pickString(row, ["title"]),
+        description: pickString(row, ["description"]),
+        due_date: pickString(row, ["due_date"]),
+        created_at: pickString(row, ["created_at"]),
+        assignee_id:
+          pickString(row, [
+            "assignee_id",
+            "assignee_user_id",
+            "assigned_to",
+            "assigned_to_id",
+            "assigned_user_id",
+            "assignee",
+            "user_id",
+          ]) ??
+          (assigneeObj ? pickString(assigneeObj, ["id", "user_id", "sub"]) : null),
+        assignee_name:
+          pickString(row, [
+            "assignee_name",
+            "assignee_full_name",
+            "assigned_to_name",
+            "assignee_display_name",
+            "assigned_user_name",
+          ]) ??
+          (assigneeObj ? pickString(assigneeObj, ["name", "full_name", "display_name"]) : null),
+        assignee_email:
+          pickString(row, ["assignee_email", "assignee_mail", "assigned_to_email", "assignee_user_email"]) ??
+          (assigneeObj ? pickString(assigneeObj, ["email"]) : null),
+        assignee_avatar:
+          pickString(row, [
+            "assignee_avatar",
+            "assignee_avatar_url",
+            "assignee_image",
+            "assigned_to_avatar",
+          ]) ??
+          (assigneeObj ? pickString(assigneeObj, ["avatar_url", "avatar", "image"]) : null),
+        reporter_name: pickString(row, ["reporter_name", "creator_name", "created_by_name"]),
+        reporter_avatar: pickString(row, ["reporter_avatar", "creator_avatar", "created_by_avatar"]),
+        epic_id: pickString(row, ["epic_id"]),
+        priority: pickString(row, ["priority"]),
+        status: pickString(row, ["status"]) as TaskStatus | null,
+      };
+    });
     const contentRange = res.headers.get("content-range");
     const totalStr = contentRange?.split("/")?.[1] ?? "0";
     const total = Number.parseInt(totalStr, 10);

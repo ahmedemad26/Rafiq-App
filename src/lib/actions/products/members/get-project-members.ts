@@ -118,9 +118,10 @@ export async function getProjectMembers(projectId: string) {
         (member ? pickFirstString(member, ["email"]) : "");
 
       const userId =
-        pickUuid(row, ["user_id", "userId"]) ??
-        (user ? pickUuid(user, ["id", "user_id", "userId"]) : null) ??
-        (member ? pickUuid(member, ["user_id", "userId", "id"]) : null) ??
+        pickUuid(row, ["user_id", "userId", "auth_user_id", "member_user_id", "sub"]) ??
+        (user ? pickUuid(user, ["id", "user_id", "userId", "sub"]) : null) ??
+        (member ? pickUuid(member, ["user_id", "userId", "auth_user_id", "sub"]) : null) ??
+        (profile ? pickUuid(profile, ["user_id", "userId", "id", "sub"]) : null) ??
         null;
 
       return {

@@ -13,22 +13,34 @@ import { TASK_STATUSES } from "@/lib/constants/task-status";
 import type { UpdateTaskPatch, UpdateTaskResult } from "@/lib/types/actions/products/tasks.type";
 import { revalidateTag } from "next/cache";
 
-function buildPatchBody(patch: UpdateTaskPatch): Record<string, unknown> | null {
-  const body: Record<string, unknown> = {};
+function normalizeStatus(status?: string): string | null {
+  if (status === undefined) return null;
+  const normalized = status.trim().toUpperCase();
+  if (!(TASK_STATUSES as readonly string[]).includes(normalized)) {
+    return null;
+  }
+  return normalized;
+}
 
+function buildPatchBodies(patch: UpdateTaskPatch): Array<Record<string, unknown>> {
+  const normalizedStatus = normalizeStatus(patch.status);
+  if (patch.status !== undefined && !normalizedStatus) return [];
+
+  const shared: Record<string, unknown> = {};
   if (patch.status !== undefined) {
-    const normalized = patch.status.trim().toUpperCase();
-    if (!(TASK_STATUSES as readonly string[]).includes(normalized)) {
-      return null;
-    }
-    body.status = normalized;
+    shared.status = normalizedStatus;
   }
 
   if (patch.assignee_id !== undefined) {
-    body.assignee_id = patch.assignee_id ?? null;
+    const value = patch.assignee_id ?? null;
+    return [
+      { ...shared, assignee_id: value },
+      { ...shared, assignee_user_id: value },
+      { ...shared, assigned_to: value },
+    ];
   }
 
-  return Object.keys(body).length > 0 ? body : null;
+  return Object.keys(shared).length > 0 ? [shared] : [];
 }
 
 export async function updateTask(
@@ -38,8 +50,8 @@ export async function updateTask(
 ): Promise<UpdateTaskResult> {
   if (!taskId?.trim()) return { error: "Task id is required." };
 
-  const body = buildPatchBody(patch);
-  if (!body) return { error: "No valid fields to update." };
+  const bodies = buildPatchBodies(patch);
+  if (!bodies.length) return { error: "No valid fields to update." };
 
   try {
     const accessToken = await getAccessToken();
@@ -52,7 +64,10 @@ export async function updateTask(
     if (supabase.error) return { error: supabase.error };
     if (!supabase.url || !supabase.anonKey) return { error: "Missing Supabase configuration." };
 
-    const updateOnce = async (column: "id" | "task_id", value: string) => {
+    const expectedAssignee =
+      patch.assignee_id === undefined ? undefined : (patch.assignee_id?.trim() || null);
+
+    const updateOnce = async (column: "id" | "task_id", value: string, body: Record<string, unknown>) => {
       const url = new URL(`${supabase.url}/rest/v1/tasks`);
       url.searchParams.set(column, `eq.${value}`);
       url.searchParams.set("select", "id");
@@ -79,23 +94,73 @@ export async function updateTask(
       return { updated, error: "" };
     };
 
-    const byId = await updateOnce("id", taskId.trim());
-    if (byId.error) return { error: byId.error };
-    if (byId.updated > 0) {
-      revalidateTag("tasks");
-      return { success: true };
-    }
+    const verifyAssigneeOnce = async (column: "id" | "task_id", value: string) => {
+      if (expectedAssignee === undefined) return { ok: true, error: "" };
+
+      const url = new URL(`${supabase.url}/rest/v1/tasks`);
+      url.searchParams.set(column, `eq.${value}`);
+      url.searchParams.set("select", "assignee_id");
+      url.searchParams.set("limit", "1");
+
+      const res = await fetch(url.toString(), {
+        method: "GET",
+        headers: buildSupabaseHeaders(accessToken, supabase.anonKey),
+        cache: "no-store",
+      });
+
+      const { data, parseError } = await parseJsonResponseBody(res);
+      if (parseError) return { ok: false, error: parseError };
+      if (!res.ok) {
+        return {
+          ok: false,
+          error: extractErrorMessage(data, "Failed to verify assignee update."),
+        };
+      }
+
+      const row = Array.isArray(data) ? (data[0] as { assignee_id?: string | null } | undefined) : undefined;
+      const actualAssignee = row?.assignee_id?.trim() || null;
+      const ok = actualAssignee === expectedAssignee;
+      return {
+        ok,
+        error: ok ? "" : "Assignee was not updated in database.",
+      };
+    };
 
     const publicId = taskPublicId?.trim();
-    if (publicId) {
-      const byTaskId = await updateOnce("task_id", publicId);
-      if (byTaskId.error) return { error: byTaskId.error };
-      if (byTaskId.updated > 0) {
+    let lastError = "";
+
+    for (const body of bodies) {
+      const byId = await updateOnce("id", taskId.trim(), body);
+      if (byId.updated > 0) {
+        const verified = await verifyAssigneeOnce("id", taskId.trim());
+        if (!verified.ok) return { error: verified.error };
         revalidateTag("tasks");
         return { success: true };
       }
+
+      if (byId.error) {
+        const isUnknownColumn = /column .* does not exist/i.test(byId.error);
+        if (!isUnknownColumn) return { error: byId.error };
+        lastError = byId.error;
+      }
+
+      if (publicId) {
+        const byTaskId = await updateOnce("task_id", publicId, body);
+        if (byTaskId.updated > 0) {
+          const verified = await verifyAssigneeOnce("task_id", publicId);
+          if (!verified.ok) return { error: verified.error };
+          revalidateTag("tasks");
+          return { success: true };
+        }
+        if (byTaskId.error) {
+          const isUnknownColumn = /column .* does not exist/i.test(byTaskId.error);
+          if (!isUnknownColumn) return { error: byTaskId.error };
+          lastError = byTaskId.error;
+        }
+      }
     }
 
+    if (lastError) return { error: lastError };
     return { error: "Task was not found for update." };
   } catch (error) {
     return {

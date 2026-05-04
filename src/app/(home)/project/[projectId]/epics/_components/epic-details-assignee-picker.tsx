@@ -31,6 +31,9 @@ export function EpicDetailsAssigneePicker(props: {
 
   const popoverRef = useRef<HTMLDivElement>(null);
 
+  const memberAssigneeValue = (member: ProjectMember): string =>
+    member.userId?.trim() || "";
+
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (event: PointerEvent) => {
@@ -44,7 +47,7 @@ export function EpicDetailsAssigneePicker(props: {
   }, [open, setOpen]);
 
   const currentAssigneeSub = epic?.assignee?.sub?.trim() ?? "";
-  const assignableMembers = members.filter((m) => m.userId);
+  const assignableMembers = members.filter((m) => Boolean(m.userId?.trim()));
 
   const handlePick = (userId: string | null) => {
     const nextSub = userId?.trim() ?? "";
@@ -114,7 +117,7 @@ export function EpicDetailsAssigneePicker(props: {
                 key={member.id}
                 type="button"
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
-                onClick={() => handlePick(member.userId)}
+                onClick={() => handlePick(memberAssigneeValue(member))}
               >
                 {member.avatarUrl ? (
                   <span

@@ -1,19 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
-import { toast } from "sonner";
-import { ChevronDown, Link2 } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { TaskStatus } from "@/lib/constants/task-status";
-import { TASK_STATUSES, taskStatusLabel } from "@/lib/constants/task-status";
-import { updateTask } from "@/lib/actions/products/tasks/update-task";
-import { queryKeys } from "@/lib/state/query-keys";
-import type { ProjectMember } from "@/lib/types/member";
-import { cn } from "@/lib/utils/utils";
-import { useProjectMembers } from "../../members/_hooks/use-project-members";
-import { useProjectTaskDetails } from "../_hooks/use-project-task-details";
+import { TaskDetailsPersonRow } from "./task-details-person-row";
+import { TaskDetailsStatusPicker } from "./task-details-status-picker";
+import { TaskDetailsAssigneePicker } from "./task-details-assignee-picker";
+import { formatDate } from "./task-details-utils";
+import { useTaskDetailsDialogState } from "./task-details-dialog-state";
 
 type TaskDetailsDialogProps = {
   projectId: string;
@@ -22,80 +15,6 @@ type TaskDetailsDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-function formatDate(value: string | null | undefined): string {
-  if (!value?.trim()) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-}
-
-function initialsFromName(name: string): string {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-
-  if (parts.length === 0) return "NA";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase();
-}
-
-function normalizeStatus(value: string | null | undefined): TaskStatus | null {
-  if (!value?.trim()) return null;
-  const normalized = value.trim().toUpperCase();
-  return (TASK_STATUSES as readonly string[]).includes(normalized) ? (normalized as TaskStatus) : null;
-}
-
-function statusBadgeClass(status: TaskStatus | null): string {
-  if (status === "TO_DO") return "bg-slate-200 text-slate-700";
-  if (status === "IN_PROGRESS") return "bg-[#CFE1FF] text-[#1A4D9E]";
-  if (status === "DONE") return "bg-[#78E7AE] text-[#0D3C25]";
-  if (status === "BLOCKED") return "bg-rose-200 text-rose-800";
-  return "bg-indigo-100 text-indigo-700";
-}
-
-function PersonRow({
-  label,
-  name,
-  avatar,
-}: {
-  label: string;
-  name: string;
-  avatar: string | null;
-}) {
-  return (
-    <div>
-      <p className="text-[10px] font-bold tracking-[0.08em] text-slate-400 uppercase">{label}</p>
-      <div className="mt-2 flex items-center gap-2">
-        <span
-          className={cn(
-            "inline-flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px] font-bold",
-            avatar ? "bg-slate-200 text-transparent" : "bg-[#E8EEF8] text-[#003380]",
-          )}
-        >
-          {avatar ? (
-            <span
-              className="size-full bg-cover bg-center"
-              style={{ backgroundImage: `url(${avatar})` }}
-              aria-hidden
-            />
-          ) : (
-            initialsFromName(name)
-          )}
-        </span>
-        <p className="truncate text-sm font-medium text-[#11284d]">{name}</p>
-      </div>
-    </div>
-  );
-}
-
-function normalizeName(value: string | null | undefined): string {
-  return value?.trim().toLowerCase() ?? "";
-}
 
 export default function TaskDetailsDialog({
   projectId,
@@ -103,87 +22,32 @@ export default function TaskDetailsDialog({
   open,
   onOpenChange,
 }: TaskDetailsDialogProps) {
-  const { data: session } = useSession();
-  const queryClient = useQueryClient();
-  const { data: task, isPending, isError } = useProjectTaskDetails({
+  const {
+    task,
+    isPending,
+    isError,
+    popoverRef,
+    status,
+    statusMenuOpen,
+    setStatusMenuOpen,
+    assigneeMenuOpen,
+    setAssigneeMenuOpen,
+    isUpdating,
+    isMembersPending,
+    assignableMembers,
+    effectiveAssigneeId,
+    currentAssigneeValue,
+    currentAssignee,
+    assigneeDisplayName,
+    reporterName,
+    reporterAvatar,
+    handleStatusChange,
+    handleAssigneeChange,
+  } = useTaskDetailsDialogState({
     projectId,
     taskId,
-    enabled: open,
+    open,
   });
-  const { data: members = [], isPending: isMembersPending } = useProjectMembers(projectId);
-  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
-  const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
-
-  const updateMutation = useMutation({
-    mutationFn: async (patch: { status?: TaskStatus; assignee_id?: string | null }) => {
-      if (!task?.id) throw new Error("Task id is missing.");
-      const result = await updateTask(task.id, patch, task.task_id ?? null);
-      if ("error" in result) throw new Error(result.error);
-      return true;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.root, "tasks"] });
-      void queryClient.invalidateQueries({
-        queryKey: [...queryKeys.projects.root, "tasks", "details", projectId, taskId],
-      });
-    },
-  });
-
-  useEffect(() => {
-    if (!statusMenuOpen && !assigneeMenuOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      const el = popoverRef.current;
-      if (el && !el.contains(event.target as Node)) {
-        setStatusMenuOpen(false);
-        setAssigneeMenuOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [statusMenuOpen, assigneeMenuOpen]);
-
-  const status = normalizeStatus(task?.status ?? null);
-  const taskWithAssigneeId = task as (typeof task & { assignee_id?: string | null }) | null;
-  const currentAssigneeId = taskWithAssigneeId?.assignee_id?.trim() || "";
-  const assignableMembers = members.filter((m: ProjectMember) => Boolean(m.userId));
-  const currentAssignee =
-    assignableMembers.find((m) => m.id === currentAssigneeId || (m.userId ?? "") === currentAssigneeId) ??
-    assignableMembers.find((m) => normalizeName(m.name) === normalizeName(task?.assignee_name));
-  const reporterName =
-    task?.reporter_name?.trim() ||
-    session?.user?.name?.trim() ||
-    "Unknown";
-  const reporterAvatar = task?.reporter_avatar?.trim() || session?.user?.image?.trim() || null;
-
-  const handleStatusChange = async (nextStatus: TaskStatus) => {
-    if (nextStatus === status || updateMutation.isPending) {
-      setStatusMenuOpen(false);
-      return;
-    }
-    setStatusMenuOpen(false);
-    try {
-      await updateMutation.mutateAsync({ status: nextStatus });
-      toast.success("Status updated.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update status.");
-    }
-  };
-
-  const handleAssigneeChange = async (assigneeId: string | null) => {
-    if (updateMutation.isPending) return;
-    if ((assigneeId ?? "") === currentAssigneeId) {
-      setAssigneeMenuOpen(false);
-      return;
-    }
-    setAssigneeMenuOpen(false);
-    try {
-      await updateMutation.mutateAsync({ assignee_id: assigneeId });
-      toast.success("Assignee updated.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update assignee.");
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -254,102 +118,39 @@ export default function TaskDetailsDialog({
             </section>
 
             <aside className="space-y-6 bg-[#EEF1FB] p-6" ref={popoverRef}>
-              <div className="relative">
-                <p className="text-[10px] font-bold tracking-[0.08em] text-slate-400 uppercase">Status</p>
-                <button
-                  type="button"
-                  disabled={updateMutation.isPending}
-                  onClick={() => {
-                    setAssigneeMenuOpen(false);
-                    setStatusMenuOpen((prev) => !prev);
-                  }}
-                  className={cn(
-                    "mt-2 inline-flex w-full items-center justify-between rounded-sm px-3 py-2 text-[10px] font-bold tracking-[0.08em] uppercase",
-                    statusBadgeClass(status),
-                    updateMutation.isPending && "cursor-not-allowed opacity-60",
-                  )}
-                >
-                  <span>{status ? taskStatusLabel(status) : "Unknown"}</span>
-                  <ChevronDown className="size-3.5" />
-                </button>
-                {statusMenuOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
-                    {TASK_STATUSES.map((item) => (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => void handleStatusChange(item)}
-                        className={cn(
-                          "flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold uppercase hover:bg-slate-50",
-                          status === item ? "bg-slate-50 text-[#003380]" : "text-slate-700",
-                        )}
-                      >
-                        {taskStatusLabel(item)}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
+              <TaskDetailsStatusPicker
+                status={status}
+                open={statusMenuOpen}
+                setOpen={(next) => {
+                  setAssigneeMenuOpen(false);
+                  setStatusMenuOpen(next);
+                }}
+                isPending={isUpdating}
+                onChange={(next) => void handleStatusChange(next)}
+              />
 
-              <div className="relative">
-                <button
-                  type="button"
-                  disabled={updateMutation.isPending}
-                  onClick={() => {
-                    setStatusMenuOpen(false);
-                    setAssigneeMenuOpen((prev) => !prev);
-                  }}
-                  className={cn(
-                    "w-full rounded-md p-0 text-left",
-                    updateMutation.isPending && "cursor-not-allowed opacity-60",
-                  )}
-                >
-                  <PersonRow
+              <TaskDetailsAssigneePicker
+                open={assigneeMenuOpen}
+                setOpen={(next) => {
+                  setStatusMenuOpen(false);
+                  setAssigneeMenuOpen(next);
+                }}
+                isPending={isUpdating}
+                isMembersPending={isMembersPending}
+                assignableMembers={assignableMembers}
+                effectiveAssigneeId={effectiveAssigneeId}
+                currentAssigneeValue={currentAssigneeValue}
+                triggerContent={
+                  <TaskDetailsPersonRow
                     label="Assignee"
-                    name={
-                      currentAssignee?.name?.trim() ||
-                      currentAssignee?.email?.trim() ||
-                      task.assignee_name?.trim() ||
-                      "Unassigned"
-                    }
-                    avatar={currentAssignee?.avatarUrl?.trim() || task.assignee_avatar?.trim() || null}
+                    name={assigneeDisplayName}
+                    avatar={currentAssignee?.avatarUrl?.trim() || null}
                   />
-                </button>
-                {assigneeMenuOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 max-h-56 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
-                    <button
-                      type="button"
-                      onClick={() => void handleAssigneeChange(null)}
-                      className="w-full px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
-                    >
-                      Unassigned
-                    </button>
-                    {isMembersPending ? (
-                      <p className="px-3 py-2 text-xs text-slate-500">Loading members…</p>
-                    ) : null}
-                    {assignableMembers.map((member) => {
-                      const isActive =
-                        member.id === (currentAssignee?.id ?? "") ||
-                        member.userId === (currentAssignee?.userId ?? "");
-                      return (
-                        <button
-                          key={member.id}
-                          type="button"
-                          onClick={() => void handleAssigneeChange(member.userId)}
-                          className={cn(
-                            "w-full px-3 py-2 text-left text-sm hover:bg-slate-50",
-                            isActive ? "bg-slate-50 font-semibold text-[#003380]" : "text-slate-700",
-                          )}
-                        >
-                          {member.name?.trim() || member.email || "Member"}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </div>
+                }
+                onChange={(assigneeId) => void handleAssigneeChange(assigneeId)}
+              />
 
-              <PersonRow
+              <TaskDetailsPersonRow
                 label="Reporter"
                 name={reporterName}
                 avatar={reporterAvatar}

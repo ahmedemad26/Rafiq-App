@@ -30,6 +30,23 @@ type CreateEpicFormProps = {
   onCancel?: () => void;
 };
 
+function getMemberDisplay(member: { name: string; email: string }) {
+  const normalizedName = member.name.trim();
+  const normalizedEmail = member.email.trim();
+
+  if (normalizedName && normalizedEmail) {
+    return `${normalizedName} (${normalizedEmail})`;
+  }
+
+  if (normalizedName) return normalizedName;
+  if (normalizedEmail) return normalizedEmail;
+  return "Unknown member";
+}
+
+function getMemberAssigneeValue(member: { id: string; userId: string | null }) {
+  return member.userId?.trim() || "";
+}
+
 export default function CreateEpicForm({
   projectId,
   onSuccess,
@@ -167,8 +184,12 @@ export default function CreateEpicForm({
                       >
                         <option value="">Select a member...</option>
                         {members.map((member) => (
-                          <option key={member.id} value={member.userId ?? ""} disabled={!member.userId}>
-                            {member.name}
+                          <option
+                            key={member.id}
+                            value={getMemberAssigneeValue(member)}
+                            disabled={!member.userId?.trim()}
+                          >
+                            {getMemberDisplay(member)}
                           </option>
                         ))}
                       </select>
