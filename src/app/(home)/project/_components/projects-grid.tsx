@@ -1,6 +1,7 @@
 import ProjectsGridSkeleton from "@/components/skeleton/projects-grid-skeleton";
 import Link from "next/link";
-import { CirclePlus, Pencil } from "lucide-react";
+import { CirclePlus, EyeOff, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // props for projects grid
 type ProjectCardItem = {
@@ -74,6 +75,40 @@ export default function ProjectsGrid({ isLoading, projects }: ProjectsGridProps)
           Add project
         </span>
       </Link>
+    </div>
+  );
+}
+
+export function ProjectsErrorState({
+  onRetry,
+  message,
+}: {
+  onRetry: () => void;
+  message?: string;
+}) {
+  return (
+    <div className="flex min-h-[calc(100svh-16rem)] flex-col items-center justify-center rounded-2xl px-6 text-center">
+      <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-red-500">
+        <EyeOff className="h-7 w-7" />
+      </div>
+
+      <h2 className="text-3xl font-bold tracking-tight text-[#11284d]">
+        Something went wrong
+      </h2>
+
+      <p className="mt-3 max-w-sm text-base leading-relaxed text-slate-600">
+        {message ?? "We're having trouble retrieving your projects right now. Please try again in a moment."}
+      </p>
+
+      <Button
+        type="button"
+        variant="brand"
+        size="default"
+        onClick={onRetry}
+        className="mt-7 h-11 rounded-md bg-[#003380]! px-6 text-sm font-semibold text-white hover:bg-[#002d6e]! hover:opacity-100!"
+      >
+        Retry Connection
+      </Button>
     </div>
   );
 }

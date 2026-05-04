@@ -51,7 +51,7 @@ export default function ForgotForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         {/* Email */}
         <FormField
           control={form.control}
@@ -63,7 +63,9 @@ export default function ForgotForm({
               </FormLabel>
               <FormControl>
                 <Input
-                  type="email"
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
                   placeholder="Enter your email"
                   {...field}
                   className="rounded-lg bg-surface-highest text-slate-dark placeholder:text-slate-mid"

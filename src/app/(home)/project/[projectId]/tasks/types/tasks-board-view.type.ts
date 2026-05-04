@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import type { TaskStatus } from "@/lib/constants/task-status";
+import type { ProjectMember } from "@/lib/types/member";
 import type { ProjectTask } from "@/lib/types/project-tasks";
 
 export type TasksPage = {
@@ -17,6 +18,7 @@ export type TasksInfiniteData = {
 export type StatusColumnProps = {
   projectId: string;
   status: TaskStatus;
+  members?: ProjectMember[];
   onOpenTask: (taskId: string) => void;
   searchTerm: string;
   onChangeTaskStatus: (taskId: string, fromStatus: TaskStatus, toStatus: TaskStatus) => void;
@@ -25,6 +27,7 @@ export type StatusColumnProps = {
 export type TaskCardProps = {
   task: ProjectTask;
   status: TaskStatus;
+  members?: ProjectMember[];
   onOpenTask: (taskId: string) => void;
   onChangeTaskStatus: (taskId: string, fromStatus: TaskStatus, toStatus: TaskStatus) => void;
 };

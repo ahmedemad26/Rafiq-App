@@ -13,6 +13,14 @@ import type { TaskStatus } from "@/lib/constants/task-status";
 import type { GetProjectTasksByStatusResult } from "@/lib/types/actions/products/tasks.type";
 import type { ProjectTask } from "@/lib/types/project-tasks";
 
+function pickString(row: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
 export async function getProjectTasksByStatus(
   projectId: string,
   status: TaskStatus,
@@ -60,7 +68,25 @@ export async function getProjectTasksByStatus(
       };
     }
 
-    const tasks = (Array.isArray(data) ? data : []) as ProjectTask[];
+    const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
+    const tasks: ProjectTask[] = rows.map((row) => ({
+      id: String(row.id ?? ""),
+      project_id: pickString(row, ["project_id"]),
+      task_id: pickString(row, ["task_id"]),
+      title: pickString(row, ["title"]),
+      description: pickString(row, ["description"]),
+      due_date: pickString(row, ["due_date"]),
+      created_at: pickString(row, ["created_at"]),
+      assignee_id: pickString(row, ["assignee_id", "assignee_user_id", "assigned_to", "user_id"]),
+      assignee_name: pickString(row, ["assignee_name", "assignee_full_name", "assigned_to_name"]),
+      assignee_email: pickString(row, ["assignee_email", "assignee_mail", "assigned_to_email"]),
+      assignee_avatar: pickString(row, ["assignee_avatar", "assignee_avatar_url", "assignee_image"]),
+      reporter_name: pickString(row, ["reporter_name", "creator_name", "created_by_name"]),
+      reporter_avatar: pickString(row, ["reporter_avatar", "creator_avatar", "created_by_avatar"]),
+      epic_id: pickString(row, ["epic_id"]),
+      priority: pickString(row, ["priority"]),
+      status: pickString(row, ["status"]) as TaskStatus | null,
+    }));
     const contentRange = res.headers.get("content-range");
     const totalStr = contentRange?.split("/")?.[1] ?? "0";
     const total = Number.parseInt(totalStr, 10);

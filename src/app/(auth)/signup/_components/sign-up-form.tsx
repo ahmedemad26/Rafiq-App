@@ -18,7 +18,6 @@ import {
 
 import { registerSchema, RegisterValues, PASSWORD_CHECKS } from "@/lib/schemes/register-schema";
 import useRegister from "../_hooks/use-register";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils/utils";
 
 export default function SignUpForm() {
@@ -48,18 +47,14 @@ export default function SignUpForm() {
   const onSubmit = (values: RegisterValues) => {
     register(values, {
       onSuccess: () => {
-        toast.success("Account created successfully");
         setTimeout(() => router.push("/login"), 2000);
-      },
-      onError: (err) => {
-        toast.error(err.message);
       },
     });
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-1">
+      <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-1">
         {form.formState.errors.root?.message && (
           <p className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">
             {form.formState.errors.root.message}
@@ -98,7 +93,9 @@ export default function SignUpForm() {
               </FormLabel>
               <FormControl>
                 <Input
-                  type="email"
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
                   placeholder="yourname@company.com"
                   {...field}
                   className="bg-surface-highest text-slate-dark"

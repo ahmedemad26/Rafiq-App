@@ -98,7 +98,9 @@ export default function InviteMemberDialog({
             </label>
             <div className="relative">
               <Input
-                type="email"
+                type="text"
+                inputMode="email"
+                autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 onKeyDown={(event) => {

@@ -146,6 +146,10 @@ export async function getProjectsPage(
     }
 
     if (!res.ok) {
+      if (res.status === 401) {
+        return { error: "Unauthorized. Please login again." };
+      }
+
       return {
         error: extractErrorMessage(data, `Request failed with status ${res.status}.`),
       };

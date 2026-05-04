@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { ChevronDown, Link2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -102,6 +103,7 @@ export default function TaskDetailsDialog({
   open,
   onOpenChange,
 }: TaskDetailsDialogProps) {
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const { data: task, isPending, isError } = useProjectTaskDetails({
     projectId,
@@ -148,6 +150,11 @@ export default function TaskDetailsDialog({
   const currentAssignee =
     assignableMembers.find((m) => m.id === currentAssigneeId || (m.userId ?? "") === currentAssigneeId) ??
     assignableMembers.find((m) => normalizeName(m.name) === normalizeName(task?.assignee_name));
+  const reporterName =
+    task?.reporter_name?.trim() ||
+    session?.user?.name?.trim() ||
+    "Unknown";
+  const reporterAvatar = task?.reporter_avatar?.trim() || session?.user?.image?.trim() || null;
 
   const handleStatusChange = async (nextStatus: TaskStatus) => {
     if (nextStatus === status || updateMutation.isPending) {
@@ -344,8 +351,8 @@ export default function TaskDetailsDialog({
 
               <PersonRow
                 label="Reporter"
-                name={task.reporter_name?.trim() || "Unknown"}
-                avatar={task.reporter_avatar?.trim() || null}
+                name={reporterName}
+                avatar={reporterAvatar}
               />
 
               <div className="border-t border-slate-300 pt-4 text-sm">

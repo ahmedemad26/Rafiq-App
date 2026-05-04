@@ -14,6 +14,7 @@ import type { StatusColumnProps } from "../types/tasks-board-view.type";
 export default function StatusColumn({
   projectId,
   status,
+  members = [],
   onOpenTask,
   searchTerm,
   onChangeTaskStatus,
@@ -96,6 +97,7 @@ export default function StatusColumn({
                 key={task.id}
                 task={task}
                 status={status}
+                members={members}
                 onOpenTask={onOpenTask}
                 onChangeTaskStatus={onChangeTaskStatus}
               />

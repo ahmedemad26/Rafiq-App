@@ -13,7 +13,7 @@ import {
   useProjectsPageQuery,
 } from "./_hooks/use-projects-query";
 import ProjectsHeader from "./_components/projects-header";
-import ProjectsGrid from "./_components/projects-grid";
+import ProjectsGrid, { ProjectsErrorState } from "./_components/projects-grid";
 import ProjectsInfiniteSentinel from "./_components/projects-infinite-sentinel";
 import ProjectsPagination from "./_components/projects-pagination";
 
@@ -68,19 +68,22 @@ export default function ProjectsPage() {
     const err = isMobile ? infiniteQuery.error : pageQuery.error;
     return err instanceof Error ? err.message : "Failed to load projects";
   }, [isMobile, infiniteQuery.error, pageQuery.error]);
+  const isAuthError = useMemo(() => {
+    const normalized = errorMessage.toLowerCase();
+    return (
+      normalized.includes("jwt expired") ||
+      normalized.includes("unauthorized") ||
+      normalized.includes("status 401")
+    );
+  }, [errorMessage]);
 
   useEffect(() => {
     if (!isError) return;
-    const normalized = errorMessage.toLowerCase();
-    const isAuthError =
-      normalized.includes("jwt expired") ||
-      normalized.includes("unauthorized");
-
     if (!isAuthError) return;
 
     const callback = encodeURIComponent("/project");
     router.replace(`/login?callbackUrl=${callback}`);
-  }, [errorMessage, isError, router]);
+  }, [isAuthError, isError, router]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / limit) || 1);
 
@@ -111,6 +114,13 @@ export default function ProjectsPage() {
   const loadMore = useCallback(() => {
     void infiniteQuery.fetchNextPage();
   }, [infiniteQuery]);
+  const retryConnection = useCallback(() => {
+    if (isMobile) {
+      void infiniteQuery.refetch();
+      return;
+    }
+    void pageQuery.refetch();
+  }, [infiniteQuery, isMobile, pageQuery]);
 
   const rangeStart = totalCount === 0 ? 0 : (page - 1) * limit + 1;
   const rangeEnd =
@@ -119,14 +129,14 @@ export default function ProjectsPage() {
   return (
     <section className="flex min-h-[calc(100svh-8rem)] w-full flex-col overflow-x-hidden">
       <ProjectsHeader />
-
-      {isError ? (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {errorMessage}
-        </div>
-      ) : null}
-
-      <ProjectsGrid isLoading={isLoading} projects={projectsWithDate} />
+      {isError && !isAuthError ? (
+        <ProjectsErrorState
+          message="We're having trouble retrieving your projects right now. Please try again in a moment."
+          onRetry={retryConnection}
+        />
+      ) : (
+        <ProjectsGrid isLoading={isLoading} projects={projectsWithDate} />
+      )}
 
       {isMobile ? (
         <ProjectsInfiniteSentinel

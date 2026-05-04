@@ -20,6 +20,7 @@ import { TASK_STATUSES } from "@/lib/constants/task-status";
 import { updateTaskStatus } from "@/lib/actions/products/tasks/update-task-status";
 import type { ProjectTask } from "@/lib/types/project-tasks";
 import { queryKeys } from "@/lib/state/query-keys";
+import { useProjectMembers } from "../../members/_hooks/use-project-members";
 import TaskDetailsDialog from "./task-details-dialog";
 import StatusColumn from "./status-column";
 import TasksBoardHeader from "./tasks-board-header";
@@ -38,6 +39,7 @@ export default function TasksBoardView({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearchValue, setDebouncedSearchValue] = useState("");
+  const { data: members = [] } = useProjectMembers(projectId);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -187,6 +189,7 @@ export default function TasksBoardView({
                 key={status}
                 projectId={projectId}
                 status={status}
+                members={members}
                 onOpenTask={(taskId) => setSelectedTaskId(taskId)}
                 searchTerm={debouncedSearchValue}
                 onChangeTaskStatus={handleQuickStatusChange}

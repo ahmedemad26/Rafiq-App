@@ -64,7 +64,7 @@ export default function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-7">
+      <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-7">
         {/* Email */}
         <FormField
           control={form.control}
@@ -76,7 +76,9 @@ export default function LoginForm() {
               </FormLabel>
               <FormControl>
                 <Input
-                  type="email"
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
                   placeholder="yourname@company.com"
                   {...field}
                   className="bg-surface-highest text-slate-dark"
