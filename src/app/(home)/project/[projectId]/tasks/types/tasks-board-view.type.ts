@@ -21,6 +21,7 @@ export type StatusColumnProps = {
   members?: ProjectMember[];
   onOpenTask: (taskId: string) => void;
   searchTerm: string;
+  updatingTaskIds: Set<string>;
   onChangeTaskStatus: (taskId: string, fromStatus: TaskStatus, toStatus: TaskStatus) => void;
 };
 
@@ -29,6 +30,7 @@ export type TaskCardProps = {
   status: TaskStatus;
   members?: ProjectMember[];
   onOpenTask: (taskId: string) => void;
+  isStatusUpdating?: boolean;
   onChangeTaskStatus: (taskId: string, fromStatus: TaskStatus, toStatus: TaskStatus) => void;
 };
 

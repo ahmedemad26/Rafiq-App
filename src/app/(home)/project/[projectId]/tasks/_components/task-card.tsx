@@ -53,6 +53,7 @@ export default function TaskCard({
   status,
   members = [],
   onOpenTask,
+  isStatusUpdating = false,
   onChangeTaskStatus,
 }: TaskCardProps) {
   const assignedMember = resolveAssignedMember(task, members);
@@ -133,6 +134,7 @@ export default function TaskCard({
       <div className="mt-2 sm:hidden">
         <select
           value={status}
+          disabled={isStatusUpdating}
           onClick={(event) => event.stopPropagation()}
           onPointerDown={(event) => event.stopPropagation()}
           onChange={(event) => {
@@ -140,7 +142,10 @@ export default function TaskCard({
             if (nextStatus === status) return;
             onChangeTaskStatus(task.id, status, nextStatus as typeof status);
           }}
-          className="h-8 w-full rounded-md border border-slate-200 bg-slate-50 px-2 text-[11px] font-semibold text-slate-700"
+          className={cn(
+            "h-8 w-full rounded-md border border-slate-200 bg-slate-50 px-2 text-[11px] font-semibold text-slate-700",
+            isStatusUpdating && "cursor-not-allowed opacity-60",
+          )}
         >
           {TASK_STATUSES.map((item) => (
             <option key={item} value={item}>

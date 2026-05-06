@@ -39,6 +39,7 @@ export default function TasksBoardView({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearchValue, setDebouncedSearchValue] = useState("");
+  const [updatingTaskIds, setUpdatingTaskIds] = useState<Set<string>>(new Set());
   const { data: members = [] } = useProjectMembers(projectId);
 
   useEffect(() => {
@@ -69,6 +70,11 @@ export default function TasksBoardView({
     },
     onMutate: async ({ taskId, fromStatus, toStatus }) => {
       if (fromStatus === toStatus) return;
+      setUpdatingTaskIds((current) => {
+        const next = new Set(current);
+        next.add(taskId);
+        return next;
+      });
 
       await Promise.all([
         queryClient.cancelQueries({ queryKey: taskQueryKey(fromStatus) }),
@@ -127,7 +133,7 @@ export default function TasksBoardView({
         };
       });
 
-      return { previousFrom, previousTo, fromStatus, toStatus };
+      return { previousFrom, previousTo, fromStatus, toStatus, taskId };
     },
     onError: (error, _vars, context) => {
       if (context?.previousFrom) {
@@ -136,9 +142,19 @@ export default function TasksBoardView({
       if (context?.previousTo) {
         queryClient.setQueryData(taskQueryKey(context.toStatus), context.previousTo);
       }
-      toast.error(error instanceof Error ? error.message : "Failed to update task status");
+      toast.error("Failed to update task. Please try again.");
     },
-    onSettled: () => {
+    onSuccess: () => {
+      toast.success("Task updated.");
+    },
+    onSettled: (_data, _error, _vars, context) => {
+      if (context?.taskId) {
+        setUpdatingTaskIds((current) => {
+          const next = new Set(current);
+          next.delete(context.taskId);
+          return next;
+        });
+      }
       void queryClient.invalidateQueries({
         queryKey: [...queryKeys.projects.root, "tasks"],
       });
@@ -192,6 +208,7 @@ export default function TasksBoardView({
                 members={members}
                 onOpenTask={(taskId) => setSelectedTaskId(taskId)}
                 searchTerm={debouncedSearchValue}
+                updatingTaskIds={updatingTaskIds}
                 onChangeTaskStatus={handleQuickStatusChange}
               />
             ))}

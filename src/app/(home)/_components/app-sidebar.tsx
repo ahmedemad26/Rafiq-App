@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCheck, CircleHelp, FolderOpen, Users, Workflow } from "lucide-react"
+import { BarChart3, CheckCheck, CircleHelp, FolderOpen, ListChecks, Users, Workflow } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
@@ -33,6 +33,7 @@ function buildNavItems(projectId: string | null): NavItem[] {
 
   return [
     { title: "Projects", shortTitle: "Projects", icon: FolderOpen, href: "/project" },
+    { title: "My Statistics", shortTitle: "Stats", icon: BarChart3, href: "/my-statistics" },
     {
       title: "Project Epics",
       shortTitle: "Epics",
@@ -42,7 +43,7 @@ function buildNavItems(projectId: string | null): NavItem[] {
     {
       title: "Project Tasks",
       shortTitle: "Tasks",
-      icon: CheckCheck,
+      icon: ListChecks,
       href: `${projectBasePath}/tasks?view=list`,
     },
     {

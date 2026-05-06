@@ -106,10 +106,10 @@ export async function getProjectMembers(projectId: string) {
       const member = asRecord(row.member);
 
       const name =
-        pickFirstString(row, ["name", "full_name", "display_name", "user_name"]) ||
-        (user ? pickFirstString(user, ["name", "full_name", "display_name"]) : "") ||
-        (profile ? pickFirstString(profile, ["name", "full_name", "display_name"]) : "") ||
-        (member ? pickFirstString(member, ["name", "full_name", "display_name"]) : "");
+        pickFirstString(row, ["full_name", "display_name", "name", "user_name"]) ||
+        (user ? pickFirstString(user, ["full_name", "display_name", "name"]) : "") ||
+        (profile ? pickFirstString(profile, ["full_name", "display_name", "name"]) : "") ||
+        (member ? pickFirstString(member, ["full_name", "display_name", "name"]) : "");
 
       const email =
         pickFirstString(row, ["email", "user_email"]) ||

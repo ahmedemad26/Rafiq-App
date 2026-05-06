@@ -17,6 +17,7 @@ export default function StatusColumn({
   members = [],
   onOpenTask,
   searchTerm,
+  updatingTaskIds,
   onChangeTaskStatus,
 }: StatusColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
@@ -99,6 +100,7 @@ export default function StatusColumn({
                 status={status}
                 members={members}
                 onOpenTask={onOpenTask}
+                isStatusUpdating={updatingTaskIds.has(task.id)}
                 onChangeTaskStatus={onChangeTaskStatus}
               />
             ))}

@@ -35,6 +35,7 @@ export function useTaskDetailsDialogState({
   const { data: members = [], isPending: isMembersPending } = useProjectMembers(projectId);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
+  const [localStatus, setLocalStatus] = useState<TaskStatus | null>(null);
   const [localAssigneeId, setLocalAssigneeId] = useState<string | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -66,14 +67,15 @@ export function useTaskDetailsDialogState({
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [statusMenuOpen, assigneeMenuOpen]);
 
-  const status = normalizeStatus(task?.status ?? null);
+  const status = localStatus ?? normalizeStatus(task?.status ?? null);
   const taskWithAssigneeId = task as (typeof task & { assignee_id?: string | null }) | null;
   const serverAssigneeId = taskWithAssigneeId?.assignee_id?.trim() || "";
 
   useEffect(() => {
     if (!open || !task?.id) return;
+    setLocalStatus(normalizeStatus(task?.status ?? null));
     setLocalAssigneeId(serverAssigneeId || null);
-  }, [open, task?.id, serverAssigneeId]);
+  }, [open, task?.id, serverAssigneeId, task?.status]);
 
   const effectiveAssigneeId = localAssigneeId?.trim() || serverAssigneeId;
   const assignableMembers = members.filter((m: ProjectMember) => Boolean(m.userId?.trim()));
@@ -91,12 +93,15 @@ export function useTaskDetailsDialogState({
       setStatusMenuOpen(false);
       return;
     }
+    const previousStatus = status;
+    setLocalStatus(nextStatus);
     setStatusMenuOpen(false);
     try {
       await updateMutation.mutateAsync({ status: nextStatus });
-      toast.success("Status updated.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update status.");
+      toast.success("Task updated.");
+    } catch {
+      setLocalStatus(previousStatus);
+      toast.error("Failed to update task. Please try again.");
     }
   };
 
@@ -113,10 +118,10 @@ export function useTaskDetailsDialogState({
     setAssigneeMenuOpen(false);
     try {
       await updateMutation.mutateAsync({ assignee_id: assigneeId });
-      toast.success("Assignee updated.");
-    } catch (error) {
+      toast.success("Task updated.");
+    } catch {
       setLocalAssigneeId(previousLocal);
-      toast.error(error instanceof Error ? error.message : "Failed to update assignee.");
+      toast.error("Failed to update task. Please try again.");
     }
   };
 

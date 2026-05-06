@@ -11,7 +11,7 @@ type MobileBottomNavProps = {
 export function MobileBottomNav({ navItems }: MobileBottomNavProps) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-[#F6F8FC] px-2 py-1 md:hidden">
-      <ul className="grid grid-cols-5 gap-1">
+      <ul className="grid gap-1" style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}>
         {navItems.map((item) => {
           return (
             <li key={`mobile-${item.title}`}>

@@ -23,7 +23,9 @@ export function useCreateTask(projectId: string) {
       await queryClient.invalidateQueries({
         queryKey: [...queryKeys.projects.root, "tasks", projectId],
       });
+      await queryClient.invalidateQueries({ queryKey: ["my-statistics"] });
       await queryClient.refetchQueries({ queryKey: tasksKey, type: "active" });
+      await queryClient.refetchQueries({ queryKey: ["my-statistics"], type: "active" });
       toast.success("Task created successfully");
     },
     onError: (error) => {
