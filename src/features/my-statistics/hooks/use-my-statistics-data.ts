@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import type { TaskStatus } from "@/lib/constants/task-status";
 import { getTasksCalendarStats } from "@/lib/actions/products/statistics/get-tasks-calendar-stats";
 import { getTasksCountPerProject } from "@/lib/actions/products/statistics/get-tasks-count-per-project";
@@ -16,6 +17,9 @@ import {
 } from "../utils/my-statistics.utils";
 
 export function useMyStatisticsData() {
+  const { data: session } = useSession();
+  const userId = session?.user?.id ?? "anonymous";
+  const hasAccessToken = Boolean(session?.user?.access_token);
   const defaults = useMemo(() => getDefaultCurrentWeekRange(), []);
   const [startDate, setStartDate] = useState(defaults.startDate);
   const [endDate, setEndDate] = useState(defaults.endDate);
@@ -25,14 +29,14 @@ export function useMyStatisticsData() {
   const rangeError = dateRangeError(startDate, endDate);
   const isRangeValid = !rangeError;
   const sharedQueryOptions = {
-    enabled: isRangeValid,
+    enabled: isRangeValid && hasAccessToken,
     refetchOnMount: "always" as const,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   };
 
   const calendarStatsQuery = useQuery({
-    queryKey: ["my-statistics", "calendar", startDate, endDate, projectId, status] as const,
+    queryKey: ["my-statistics", "calendar", userId, startDate, endDate, projectId, status] as const,
     ...sharedQueryOptions,
     queryFn: async () => {
       const result = await getTasksCalendarStats({
@@ -47,7 +51,7 @@ export function useMyStatisticsData() {
   });
 
   const projectsCountQuery = useQuery({
-    queryKey: ["my-statistics", "projects", startDate, endDate] as const,
+    queryKey: ["my-statistics", "projects", userId, startDate, endDate] as const,
     ...sharedQueryOptions,
     queryFn: async () => {
       const result = await getTasksCountPerProject({

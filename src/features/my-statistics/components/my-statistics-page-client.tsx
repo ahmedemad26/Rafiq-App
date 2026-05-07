@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { useProjectsPageQuery } from "@/features/project";
+import type { ProjectRow } from "@/lib/types/project";
 import { useMyStatisticsData } from "../hooks/use-my-statistics-data";
 import MyStatisticsFilters from "./my-statistics-filters";
 import MyStatisticsKpiCards from "./my-statistics-kpi-cards";
@@ -31,6 +33,20 @@ export default function MyStatisticsPageClient() {
     handleShiftRange,
   } = useMyStatisticsData();
   const projectsQuery = useProjectsPageQuery({ page: 1, limit: 100 });
+  const allowedProjectIds = useMemo(
+    () => new Set((projectsQuery.data?.data ?? []).map((project) => project.id)),
+    [projectsQuery.data?.data],
+  );
+  const scopedProjectsCount = useMemo(
+    () => (projectsCountQuery.data ?? []).filter((project) => allowedProjectIds.has(project.project_id)),
+    [projectsCountQuery.data, allowedProjectIds],
+  );
+  const filterProjects: ProjectRow[] = scopedProjectsCount.map((project) => ({
+    id: project.project_id,
+    name: project.project_name,
+    description: "",
+    created_at: null,
+  }));
 
   return (
     <section className="mx-auto w-full max-w-[1150px] space-y-4">
@@ -44,7 +60,7 @@ export default function MyStatisticsPageClient() {
         endDate={endDate}
         projectId={projectId}
         status={status}
-        projects={projectsQuery.data?.data ?? []}
+        projects={filterProjects}
         rangeError={rangeError}
         onShiftRange={handleShiftRange}
         onStartDateChange={setStartDate}
@@ -67,7 +83,7 @@ export default function MyStatisticsPageClient() {
           donutBackground={donutBackground}
           entries={donutEntries}
         />
-        <MyStatisticsProjectsList projects={projectsCountQuery.data ?? []} />
+        <MyStatisticsProjectsList projects={scopedProjectsCount} />
       </div>
 
       {calendarStatsQuery.isError || projectsCountQuery.isError ? (
