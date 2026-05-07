@@ -20,6 +20,23 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    files: ["src/app/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          patterns: [
+            {
+              group: ["../../*/_components/*", "../../*/_hooks/*", "../../*/_utils/*", "../../*/_types/*"],
+              message:
+                "Avoid reaching into sibling feature internals. Use feature-local modules or shared aliases instead.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export default eslintConfig;

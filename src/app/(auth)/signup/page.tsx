@@ -1,6 +1,5 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import SignUpForm from "./_components/sign-up-form";
+import { SignUpPageContent } from "@/features/auth";
 
 export const metadata: Metadata = {
   title: { absolute: "Rafiq- SignUp" },
@@ -8,28 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function SignUpPage() {
-  return (
-    <div className="bg-white rounded-xl p-4 w-full max-w-lg shadow-sm">
-      <div className="text-center md:text-center mb-3">
-        <h1 className="text-2xl md:text-3xl font-bold mb-1 text-slate-dark">
-          Create your workspace
-        </h1>
-        <p className="text-sm text-slate-mid">
-          Join the editorial approach to task management.
-        </p>
-      </div>
-
-      <SignUpForm />
-
-      <p className="text-center text-sm mt-5 text-slate-mid">
-        Already have an account?{" "}
-        <Link
-          href="/login"
-          className="font-semibold text-brand-primary"
-        >
-          Log in
-        </Link>
-      </p>
-    </div>
-  );
+  return <SignUpPageContent />;
 }

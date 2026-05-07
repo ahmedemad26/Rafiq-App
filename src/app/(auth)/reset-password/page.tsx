@@ -1,8 +1,5 @@
-import Link from "next/link";
-import ResetPasswordForm from "./_components/reset-passowrd-form";
-import { MoveLeft } from "lucide-react";
 import type { Metadata } from "next";
-import { Suspense } from "react";
+import { ResetPasswordPageContent } from "@/features/auth";
 
 export const metadata: Metadata = {
   title: "Reset Password",
@@ -10,35 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function CreateNewPassword() {
-  return (
-    <div className="w-full max-w-md">
-      <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-100">
-        {/* Header */}
-        <div className="text-left mb-6">
-          <h1 className="text-3xl font-bold mb-3 text-slate-dark">
-            Create a New Password{" "}
-          </h1>
-          <p className="text-left text-slate-mid">
-            Create a new, strong password to secure your workstation
-            access.{" "}
-          </p>
-        </div>
-
-
-        {/* Form  */}
-        <Suspense fallback={null}>
-          <ResetPasswordForm />
-        </Suspense>
-
-        <div className="mt-4 text-center">
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 font-semibold text-brand-primary hover:underline"
-          >
-            <MoveLeft size={20} /> Back to log in
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+  return <ResetPasswordPageContent />;
 }

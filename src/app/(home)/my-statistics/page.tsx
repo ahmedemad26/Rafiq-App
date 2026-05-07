@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import MyStatisticsPageClient from "./_components/my-statistics-page-client";
+import { MyStatisticsPageClient } from "@/features/my-statistics";
 
 export const metadata: Metadata = {
   title: "My Statistics",

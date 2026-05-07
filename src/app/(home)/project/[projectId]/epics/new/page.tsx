@@ -1,4 +1,4 @@
-import CreateEpicPageClient from "./_components/create-epic-page-client";
+import { CreateEpicPageClient } from "@/features/project";
 
 type CreateEpicPageProps = {
   params: Promise<{ projectId: string }>;

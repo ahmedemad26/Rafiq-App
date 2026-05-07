@@ -1,4 +1,4 @@
-import EditProjectPageClient from "./_components/edit-project-page-client";
+import { EditProjectPageClient } from "@/features/project";
 
 type EditProjectPageProps = {
   params: Promise<{ projectId: string }>;

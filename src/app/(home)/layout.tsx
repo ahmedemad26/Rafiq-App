@@ -1,7 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { AppNavbar } from "./_components/app-navbar"
-import { AppSidebar } from "./_components/app-sidebar"
+import { AppNavbar, AppSidebar } from "@/features/workspace-shell"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {

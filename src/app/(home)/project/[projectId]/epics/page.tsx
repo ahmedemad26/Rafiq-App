@@ -1,4 +1,4 @@
-import ProjectEpicsPageClient from "./_components/project-epics-page-client";
+import { ProjectEpicsPageClient } from "@/features/project";
 
 type EpicsPageProps = {
   params: Promise<{ projectId: string }>;

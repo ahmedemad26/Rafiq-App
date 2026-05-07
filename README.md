@@ -2,66 +2,67 @@
 
 ![Taskly Cover](./public/pic.jpg)
 
-Taskly is a project and task management web app built with Next.js (App Router), TypeScript, React Query, and Supabase.
+Taskly is a task and project management app built with Next.js App Router, TypeScript, Supabase, and React Query.
 
-## Features
+## What Is New
 
-- Auth flows (login, signup, forgot/reset password)
-- Projects management (create, edit, list)
-- Task board and list views
-- Drag-and-drop task status updates
-- Epics and members management
-- Invitation flow for joining projects
+- Feature-first architecture under `src/features` (auth, project, invite, my-statistics, workspace-shell)
+- Shared UI primitives and domain-agnostic components moved into `src/components` and `src/shared`
+- Route pages in `src/app` now focus on composition while feature modules hold most logic
+- Updated auth recovery setup with `NEXT_PUBLIC_PASSWORD_RESET_REDIRECT_URL`
+
+## Core Features
+
+- Authentication: login, signup, forgot password, reset password
+- Projects: create, edit, list, and manage project members
+- Tasks: board/list workflows and status tracking
+- Epics: organize tasks by higher-level goals
+- Invitations: join projects via invitation flow
+- Statistics: project and personal productivity views
 
 ## Tech Stack
 
 - Next.js 15 (App Router)
 - React 19 + TypeScript
 - Tailwind CSS 4
-- React Query
+- Supabase (`@supabase/supabase-js`, `@supabase/ssr`)
 - NextAuth
-- Supabase (REST/RPC)
-- dnd-kit (drag & drop)
-- shadcn/ui + Radix UI + Sonner
+- TanStack React Query
+- dnd-kit
+- shadcn/ui + Sonner + Lucide
+- Zod + React Hook Form
 
 ## Project Structure
 
 ```txt
 src/
-  app/                    # Routes and page-level components
-  components/             # Shared UI and providers
+  app/                    # Route segments and page entry points
+  features/               # Feature modules (business logic + feature UI)
+  components/             # Reusable UI primitives, providers, common/loading UI
+  shared/
+    components/           # Shared cross-feature building blocks
   lib/
-    actions/              # Server actions
-    types/                # Shared types
-    schemes/              # Zod schemas
+    actions/              # Data actions
+    types/                # Shared and feature typings
+    schemes/              # Validation schemas
 ```
 
 ## Prerequisites
 
-- Node.js 18+ (recommended latest LTS)
+- Node.js 18+ (latest LTS recommended)
 - Yarn 1.x
 
 ## Environment Variables
 
-Create `.env.local` for local development and `.env.production` for production:
+Copy `.env.example` to `.env.local` and fill in values:
 
 ```env
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_nextauth_secret
+NEXT_PUBLIC_PASSWORD_RESET_REDIRECT_URL=http://localhost:3000/reset-password
 ```
-
-For production, use:
-
-```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXTAUTH_URL=https://your-domain.com
-NEXTAUTH_SECRET=your_nextauth_secret
-```
-
-You can start from `.env.production.example`.
 
 ## Getting Started
 
@@ -79,12 +80,12 @@ yarn dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Scripts
+## Available Scripts
 
-- `yarn dev` - Start dev server
-- `yarn build` - Production build
-- `yarn start` - Run production server
-- `yarn lint` - Run ESLint
+- `yarn dev` - start local development server
+- `yarn build` - build for production
+- `yarn start` - run production server
+- `yarn lint` - run ESLint
 
 ## Quality Checks
 
@@ -94,8 +95,3 @@ Before pushing changes:
 yarn lint
 yarn build
 ```
-
-## Notes
-
-- Type files are organized under feature-level `types` folders and `src/lib/types`.
-- The app uses server actions for most data operations against Supabase.

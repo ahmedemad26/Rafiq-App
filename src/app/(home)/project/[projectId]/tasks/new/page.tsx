@@ -1,18 +1,9 @@
-import CreateTaskPageClient from "./_components/create-task-page-client";
-import { TASK_STATUSES, type TaskStatus } from "@/lib/constants/task-status";
+import { CreateTaskPage } from "@/features/project";
 
 type CreateNewTaskPageProps = {
   params: Promise<{ projectId: string }>;
   searchParams: Promise<{ epicId?: string; status?: string }>;
 };
-
-function toTaskStatus(value?: string): TaskStatus | undefined {
-  if (!value) return undefined;
-  const normalized = value.trim().toUpperCase();
-  return (TASK_STATUSES as readonly string[]).includes(normalized)
-    ? (normalized as TaskStatus)
-    : undefined;
-}
 
 export default async function CreateNewTaskPage({
   params,
@@ -20,13 +11,5 @@ export default async function CreateNewTaskPage({
 }: CreateNewTaskPageProps) {
   const { projectId } = await params;
   const { epicId, status } = await searchParams;
-  const initialStatus = toTaskStatus(status);
-
-  return (
-    <CreateTaskPageClient
-      projectId={projectId}
-      initialEpicId={epicId}
-      initialStatus={initialStatus}
-    />
-  );
+  return <CreateTaskPage projectId={projectId} epicId={epicId} status={status} />;
 }

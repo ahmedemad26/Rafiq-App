@@ -1,4 +1,4 @@
-import ProjectMembersPageClient from "./_components/project-members-page-client";
+import { ProjectMembersPageClient } from "@/features/project";
 
 type MembersPageProps = {
   params: Promise<{ projectId: string }>;
