@@ -4,6 +4,10 @@ import * as z from "zod";
 
 export const RESET_PASSWORD_CHECKS = [
   {
+    label: "No spaces",
+    test: (p: string) => !/\s/.test(p),
+  },
+  {
     label: "8-64 characters",
     test: (p: string) => p.length >= 8 && p.length <= 64,
   },
@@ -29,6 +33,7 @@ export const createNewPasswordSchema = z
   .object({
     password: z
       .string()
+      .regex(/^\S+$/, "Password cannot contain spaces")
       .min(8, "Password must be at least 8 characters")
       .max(64, "Password cannot exceed 64 characters")
       .regex(/[a-z]/, "Must contain one lowercase letter")

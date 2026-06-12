@@ -3,6 +3,10 @@ import * as z from "zod";
 
 export const PASSWORD_CHECKS = [
   {
+    label: "No spaces",
+    test: (p: string) => !/\s/.test(p),
+  },
+  {
     label: "At least 8 characters",
     test: (p: string) => p.length >= 8,
   },
@@ -24,6 +28,7 @@ export const registerSchema = z
     department: z.string().optional(),
     password: z
       .string()
+      .regex(/^\S+$/, "Password cannot contain spaces")
       .min(8, "Password must be at least 8 characters")
       .regex(/[A-Z]/, "Must contain one uppercase letter")
       .regex(/[a-z]/, "Must contain one lowercase letter")
