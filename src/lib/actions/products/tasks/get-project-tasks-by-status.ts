@@ -9,20 +9,33 @@ import {
   parseJsonResponseBody,
   UNAUTHORIZED_MESSAGE,
 } from "@/lib/actions/products/_utils/supabase-request";
-import type { TaskStatus } from "@/lib/constants/task-status";
+import { TASK_STATUSES, type TaskStatus } from "@/lib/constants/task-status";
 import type { GetProjectTasksByStatusResult } from "@/lib/types/actions/products/tasks.type";
 import type { ProjectTask } from "@/lib/types/project-tasks";
 
-function pickString(row: Record<string, unknown>, keys: string[]): string | null {
-  for (const key of keys) {
-    const value = row[key];
-    if (typeof value === "string" && value.trim()) return value.trim();
-  }
-  return null;
+function normalizeTaskStatus(value: unknown): TaskStatus | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toUpperCase();
+  return (TASK_STATUSES as readonly string[]).includes(normalized) ? (normalized as TaskStatus) : null;
 }
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+function mapTaskRow(row: Record<string, unknown>): ProjectTask {
+  return {
+    id: String(row.id ?? ""),
+    project_id: typeof row.project_id === "string" ? row.project_id : null,
+    task_id: typeof row.task_id === "string" ? row.task_id : null,
+    title: typeof row.title === "string" ? row.title : null,
+    description: typeof row.description === "string" ? row.description : null,
+    due_date: typeof row.due_date === "string" ? row.due_date : null,
+    created_at: typeof row.created_at === "string" ? row.created_at : null,
+    assignee_id: typeof row.assignee_id === "string" ? row.assignee_id : null,
+    assignee_name: null,
+    assignee_email: null,
+    assignee_avatar: null,
+    epic_id: typeof row.epic_id === "string" ? row.epic_id : null,
+    priority: null,
+    status: normalizeTaskStatus(row.status),
+  };
 }
 
 export async function getProjectTasksByStatus(
@@ -47,7 +60,11 @@ export async function getProjectTasksByStatus(
     if (supabase.error) return { error: supabase.error };
     if (!supabase.url || !supabase.anonKey) return { error: "Missing Supabase configuration." };
 
-    const url = new URL(`${supabase.url}/rest/v1/project_tasks`);
+    const url = new URL(`${supabase.url}/rest/v1/tasks`);
+    url.searchParams.set(
+      "select",
+      "id,project_id,task_id,title,description,due_date,created_at,assignee_id,status,epic_id",
+    );
     url.searchParams.set("project_id", `eq.${projectId}`);
     url.searchParams.set("status", `eq.${status}`);
     if (searchTerm) {
@@ -73,54 +90,7 @@ export async function getProjectTasksByStatus(
     }
 
     const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
-    const tasks: ProjectTask[] = rows.map((row) => {
-      const assigneeObj = asRecord(row.assignee) ?? asRecord(row.user) ?? asRecord(row.member);
-      return {
-        id: String(row.id ?? ""),
-        project_id: pickString(row, ["project_id"]),
-        task_id: pickString(row, ["task_id"]),
-        title: pickString(row, ["title"]),
-        description: pickString(row, ["description"]),
-        due_date: pickString(row, ["due_date"]),
-        created_at: pickString(row, ["created_at"]),
-        assignee_id:
-          pickString(row, [
-            "assignee_id",
-            "assignee_user_id",
-            "assigned_to",
-            "assigned_to_id",
-            "assigned_user_id",
-            "assignee",
-            "user_id",
-          ]) ??
-          (assigneeObj ? pickString(assigneeObj, ["id", "user_id", "sub"]) : null),
-        assignee_name:
-          pickString(row, [
-            "assignee_name",
-            "assignee_full_name",
-            "assigned_to_name",
-            "assignee_display_name",
-            "assigned_user_name",
-          ]) ??
-          (assigneeObj ? pickString(assigneeObj, ["name", "full_name", "display_name"]) : null),
-        assignee_email:
-          pickString(row, ["assignee_email", "assignee_mail", "assigned_to_email", "assignee_user_email"]) ??
-          (assigneeObj ? pickString(assigneeObj, ["email"]) : null),
-        assignee_avatar:
-          pickString(row, [
-            "assignee_avatar",
-            "assignee_avatar_url",
-            "assignee_image",
-            "assigned_to_avatar",
-          ]) ??
-          (assigneeObj ? pickString(assigneeObj, ["avatar_url", "avatar", "image"]) : null),
-        reporter_name: pickString(row, ["reporter_name", "creator_name", "created_by_name"]),
-        reporter_avatar: pickString(row, ["reporter_avatar", "creator_avatar", "created_by_avatar"]),
-        epic_id: pickString(row, ["epic_id"]),
-        priority: pickString(row, ["priority"]),
-        status: pickString(row, ["status"]) as TaskStatus | null,
-      };
-    });
+    const tasks = rows.map(mapTaskRow);
     const contentRange = res.headers.get("content-range");
     const totalStr = contentRange?.split("/")?.[1] ?? "0";
     const total = Number.parseInt(totalStr, 10);

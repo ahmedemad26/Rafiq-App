@@ -32,12 +32,7 @@ function buildPatchBodies(patch: UpdateTaskPatch): Array<Record<string, unknown>
   }
 
   if (patch.assignee_id !== undefined) {
-    const value = patch.assignee_id ?? null;
-    return [
-      { ...shared, assignee_id: value },
-      { ...shared, assignee_user_id: value },
-      { ...shared, assigned_to: value },
-    ];
+    return [{ ...shared, assignee_id: patch.assignee_id ?? null }];
   }
 
   return Object.keys(shared).length > 0 ? [shared] : [];
@@ -82,7 +77,15 @@ export async function updateTask(
       });
 
       const { data, parseError } = await parseJsonResponseBody(res);
+
+      console.log("UPDATE ONCE", {
+        status: res.status,
+        bodySent: body,
+        responseData: data,
+      });
+
       if (parseError) return { error: parseError, updated: 0 };
+
       if (!res.ok) {
         return {
           error: extractErrorMessage(data, "Failed to update task"),
@@ -91,6 +94,9 @@ export async function updateTask(
       }
 
       const updated = Array.isArray(data) ? data.length : 0;
+
+      console.log("UPDATED COUNT", updated);
+
       return { updated, error: "" };
     };
 
@@ -120,6 +126,13 @@ export async function updateTask(
       const row = Array.isArray(data) ? (data[0] as { assignee_id?: string | null } | undefined) : undefined;
       const actualAssignee = row?.assignee_id?.trim() || null;
       const ok = actualAssignee === expectedAssignee;
+
+      console.log("VERIFY ASSIGNEE", {
+        expectedAssignee,
+        actualAssignee,
+        ok,
+      });
+
       return {
         ok,
         error: ok ? "" : "Assignee was not updated in database.",

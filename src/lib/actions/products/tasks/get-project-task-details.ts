@@ -121,33 +121,9 @@ export async function getProjectTaskDetails(
 
     const headers = buildSupabaseHeaders(accessToken, supabase.anonKey);
 
-    const detailsUrl = new URL(`${supabase.url}/rest/v1/project_tasks`);
-    detailsUrl.searchParams.set("project_id", `eq.${projectId}`);
-    detailsUrl.searchParams.set("id", `eq.${taskId}`);
-
-    const detailsRes = await fetch(detailsUrl.toString(), { method: "GET", headers, cache: "no-store" });
-    const { data: detailsData, parseError: detailsParseError } = await parseJsonResponseBody(detailsRes);
-    if (detailsParseError) return { error: detailsParseError };
-
-    if (!detailsRes.ok) {
-      return {
-        error: extractErrorMessage(
-          detailsData,
-          "Failed to load task details. Please try again.",
-        ),
-      };
-    }
-
-    const detailsRow = Array.isArray(detailsData) ? asRecord(detailsData[0]) : null;
-    const detailsTaskPublicId = pickString(detailsRow ?? {}, ["task_id"]);
-
     const tasksUrl = new URL(`${supabase.url}/rest/v1/tasks`);
     tasksUrl.searchParams.set("project_id", `eq.${projectId}`);
-    if (detailsTaskPublicId) {
-      tasksUrl.searchParams.set("task_id", `eq.${detailsTaskPublicId}`);
-    } else {
-      tasksUrl.searchParams.set("id", `eq.${taskId}`);
-    }
+    tasksUrl.searchParams.set("id", `eq.${taskId}`);
     tasksUrl.searchParams.set(
       "select",
       "id,project_id,task_id,title,description,due_date,created_at,assignee_id,status,epic_id",
@@ -164,7 +140,7 @@ export async function getProjectTaskDetails(
     }
 
     const tasksRow = Array.isArray(tasksData) ? asRecord(tasksData[0]) : null;
-    const task = mapTaskRecord(detailsRow, tasksRow);
+    const task = mapTaskRecord(tasksRow, tasksRow);
     return { data: task };
   } catch (error) {
     return {

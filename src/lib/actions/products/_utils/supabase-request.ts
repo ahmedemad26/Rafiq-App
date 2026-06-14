@@ -9,6 +9,11 @@ export const MISSING_SUPABASE_ANON_KEY_MESSAGE = "Missing Supabase anon key conf
 
 export async function getAccessToken(): Promise<string | null> {
   const session = await getServerSession(authOptions);
+
+  // DEBUG مؤقت
+  console.log("[auth] session user id:", session?.user?.id);
+  console.log("[auth] access_token exists:", !!session?.user?.access_token);
+  
   return session?.user?.access_token ?? null;
 }
 

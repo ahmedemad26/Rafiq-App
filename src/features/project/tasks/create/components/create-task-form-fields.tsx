@@ -36,7 +36,10 @@ function getMemberOptionLabel(member: { name: string; email: string }): string {
   return "Unknown member";
 }
 
-function getMemberAssigneeValue(member: { id: string; userId: string | null }): string {
+function getMemberAssigneeValue(member: {
+  id: string;
+  userId: string | null;
+}): string {
   return member.userId?.trim() || "";
 }
 
@@ -200,18 +203,16 @@ export default function CreateTaskFormFields({
                   >
                     Due date
                   </Label>
-                  <FormControl>
-                    <Input
-                      id="task-due"
-                      type="datetime-local"
-                      className={cn(
-                        "h-11 rounded-lg [&::-webkit-calendar-picker-indicator]:cursor-pointer",
-                        inputSurfaceClass,
-                      )}
-                      {...field}
-                      value={field.value ?? ""}
-                    />
-                  </FormControl>
+                  <input
+                    id="task-due"
+                    type="datetime-local"
+                    className={cn(
+                      "h-11 w-full rounded-lg border-0 bg-[#EEF2FF] px-3.5 py-2.5 text-[15px] text-slate-900 shadow-none placeholder:text-slate-400/90 focus-visible:bg-[#E6ECFC] focus-visible:ring-2 focus-visible:ring-[#003380]/20 [&::-webkit-calendar-picker-indicator]:cursor-pointer",
+                    )}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -229,7 +230,9 @@ export default function CreateTaskFormFields({
                     >
                       Description
                     </Label>
-                    <span className="text-xs font-normal text-slate-400">Optional</span>
+                    <span className="text-xs font-normal text-slate-400">
+                      Optional
+                    </span>
                   </div>
                   <div className="relative">
                     <FormControl>
@@ -285,4 +288,3 @@ export default function CreateTaskFormFields({
     </div>
   );
 }
-

@@ -10,13 +10,18 @@ import {
   parseJsonResponseBody,
 } from "@/lib/actions/products/_utils/supabase-request";
 import { TASK_STATUSES, type TaskStatus } from "@/lib/constants/task-status";
-import type { TasksCalendarStats, TasksCalendarStatsInput } from "@/lib/types/statistics";
+import type {
+  TasksCalendarStats,
+  TasksCalendarStatsInput,
+} from "@/lib/types/statistics";
 
 type GetTasksCalendarStatsResult =
   | { data: TasksCalendarStats }
   | { error: string };
 
-function buildPayloadCandidates(payload: TasksCalendarStatsInput): Array<Record<string, unknown>> {
+function buildPayloadCandidates(
+  payload: TasksCalendarStatsInput,
+): Array<Record<string, unknown>> {
   const prefixedRequired = {
     p_start_date: payload.p_start_date,
     p_end_date: payload.p_end_date,
@@ -24,7 +29,9 @@ function buildPayloadCandidates(payload: TasksCalendarStatsInput): Array<Record<
   const prefixedOptional =
     payload.p_project_id || payload.p_status
       ? {
-          ...(payload.p_project_id ? { p_project_id: payload.p_project_id } : {}),
+          ...(payload.p_project_id
+            ? { p_project_id: payload.p_project_id }
+            : {}),
           ...(payload.p_status ? { p_status: payload.p_status } : {}),
         }
       : {};
@@ -71,7 +78,67 @@ function toDateKey(value: string | null | undefined): string | null {
   return date.toISOString().slice(0, 10);
 }
 
-function isDateInRange(dateKey: string, startDate: string, endDate: string): boolean {
+function toDateTime(value: string | null | undefined): Date | null {
+  if (!value?.trim()) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function extractCountFromResponse(response: Response): number {
+  const contentRange = response.headers.get("content-range") ?? "";
+  const total = contentRange.split("/").at(-1);
+  const parsed = Number.parseInt(total ?? "0", 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+async function fetchOverdueTasksCount(
+  supabaseUrl: string,
+  headers: Record<string, string>,
+  payload: TasksCalendarStatsInput,
+): Promise<number> {
+  const nowIso = new Date().toISOString();
+  const url = new URL(`${supabaseUrl}/rest/v1/tasks`);
+  url.searchParams.set("select", "id");
+  url.searchParams.set("due_date", `lt.${nowIso}`);
+  url.searchParams.set("status", "neq.DONE");
+
+  if (payload.p_project_id) {
+    url.searchParams.set("project_id", `eq.${payload.p_project_id}`);
+  }
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "HEAD",
+      headers: { ...headers, Prefer: "count=exact" },
+      cache: "no-store",
+    });
+
+    console.log("[dashboard] overdue count query", {
+      url: url.toString(),
+      status: response.status,
+      contentRange: response.headers.get("content-range"),
+    });
+
+    return response.ok ? extractCountFromResponse(response) : 0;
+  } catch (error) {
+    console.error("[dashboard] overdue count fetch error", error);
+    return 0;
+  }
+}
+
+function normalizeTaskStatus(value: unknown): TaskStatus {
+  const normalized =
+    typeof value === "string" ? value.trim().toUpperCase() : "";
+  return (TASK_STATUSES as readonly string[]).includes(normalized)
+    ? (normalized as TaskStatus)
+    : "TO_DO";
+}
+
+function isDateInRange(
+  dateKey: string,
+  startDate: string,
+  endDate: string,
+): boolean {
   return dateKey >= startDate && dateKey <= endDate;
 }
 
@@ -80,6 +147,13 @@ async function fallbackFromTasksTable(
   headers: Record<string, string>,
   payload: TasksCalendarStatsInput,
 ): Promise<GetTasksCalendarStatsResult> {
+  const overdueTasks = await fetchOverdueTasksCount(
+    supabaseUrl,
+    headers,
+    payload,
+  );
+  console.log("[dashboard] fallback overdueTasks", overdueTasks);
+
   const url = new URL(`${supabaseUrl}/rest/v1/tasks`);
   url.searchParams.set("select", "id,status,due_date,created_at,project_id");
   url.searchParams.set("order", "created_at.desc");
@@ -100,37 +174,42 @@ async function fallbackFromTasksTable(
   if (parseError) return { error: parseError };
   if (!response.ok) {
     return {
-      error: extractErrorMessage(data, "Failed to load tasks calendar statistics."),
+      error: extractErrorMessage(
+        data,
+        "Failed to load tasks calendar statistics.",
+      ),
     };
   }
 
-  const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
+  const rows = Array.isArray(data)
+    ? (data as Array<Record<string, unknown>>)
+    : [];
   const dailyMap = new Map<string, Partial<Record<TaskStatus, number>>>();
   const totals: Partial<Record<TaskStatus, number>> = {};
   let totalTasks = 0;
   let doneTasks = 0;
-  let overdueTasks = 0;
-  const todayKey = new Date().toISOString().slice(0, 10);
 
   for (const row of rows) {
-    const dueDateKey = toDateKey(typeof row.due_date === "string" ? row.due_date : null);
-    const createdDateKey = toDateKey(typeof row.created_at === "string" ? row.created_at : null);
+    const dueDate = toDateTime(
+      typeof row.due_date === "string" ? row.due_date : null,
+    );
+    const dueDateKey = dueDate ? dueDate.toISOString().slice(0, 10) : null;
+    const createdDateKey = toDateKey(
+      typeof row.created_at === "string" ? row.created_at : null,
+    );
     const dayKey = dueDateKey ?? createdDateKey;
-    if (!dayKey || !isDateInRange(dayKey, payload.p_start_date, payload.p_end_date)) {
+    if (
+      !dayKey ||
+      !isDateInRange(dayKey, payload.p_start_date, payload.p_end_date)
+    ) {
       continue;
     }
 
-    const statusRaw = typeof row.status === "string" ? row.status.trim().toUpperCase() : "";
-    const status = (TASK_STATUSES as readonly string[]).includes(statusRaw)
-      ? (statusRaw as TaskStatus)
-      : "TO_DO";
+    const status = normalizeTaskStatus(row.status);
 
     totalTasks += 1;
     totals[status] = Number(totals[status] ?? 0) + 1;
     if (status === "DONE") doneTasks += 1;
-    if (dueDateKey && dueDateKey < todayKey && status !== "DONE") {
-      overdueTasks += 1;
-    }
 
     const currentDayStatuses = dailyMap.get(dayKey) ?? {};
     currentDayStatuses[status] = Number(currentDayStatuses[status] ?? 0) + 1;
@@ -186,7 +265,10 @@ export async function getTasksCalendarStats(
       if (parseError) return { error: parseError };
 
       if (!response.ok) {
-        const message = extractErrorMessage(data, "Failed to load tasks calendar statistics.");
+        const message = extractErrorMessage(
+          data,
+          "Failed to load tasks calendar statistics.",
+        );
         lastError = message;
         if (isFunctionSignatureError(message)) {
           hasFunctionSignatureError = true;
@@ -196,13 +278,20 @@ export async function getTasksCalendarStats(
       }
 
       const result = (data ?? {}) as Partial<TasksCalendarStats>;
+      const exactOverdueTasks = await fetchOverdueTasksCount(
+        supabase.url,
+        headers,
+        payload,
+      );
+      console.log("[dashboard] rpc overdueTasks", result.overdue_tasks);
+      console.log("[dashboard] exact overdueTasks", exactOverdueTasks);
       return {
         data: {
           daily: Array.isArray(result.daily) ? result.daily : [],
           totals: result.totals ?? {},
           total_tasks: Number(result.total_tasks ?? 0),
           done_tasks: Number(result.done_tasks ?? 0),
-          overdue_tasks: Number(result.overdue_tasks ?? 0),
+          overdue_tasks: exactOverdueTasks,
         },
       };
     }

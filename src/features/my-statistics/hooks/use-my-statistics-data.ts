@@ -18,6 +18,8 @@ import {
 
 export function useMyStatisticsData() {
   const { data: session } = useSession();
+  console.log("[client] session:", JSON.stringify(session?.user));
+
   const userId = session?.user?.id ?? "anonymous";
   const hasAccessToken = Boolean(session?.user?.access_token);
   const defaults = useMemo(() => getDefaultCurrentWeekRange(), []);
@@ -36,7 +38,15 @@ export function useMyStatisticsData() {
   };
 
   const calendarStatsQuery = useQuery({
-    queryKey: ["my-statistics", "calendar", userId, startDate, endDate, projectId, status] as const,
+    queryKey: [
+      "my-statistics",
+      "calendar",
+      userId,
+      startDate,
+      endDate,
+      projectId,
+      status,
+    ] as const,
     ...sharedQueryOptions,
     queryFn: async () => {
       const result = await getTasksCalendarStats({
@@ -51,7 +61,13 @@ export function useMyStatisticsData() {
   });
 
   const projectsCountQuery = useQuery({
-    queryKey: ["my-statistics", "projects", userId, startDate, endDate] as const,
+    queryKey: [
+      "my-statistics",
+      "projects",
+      userId,
+      startDate,
+      endDate,
+    ] as const,
     ...sharedQueryOptions,
     queryFn: async () => {
       const result = await getTasksCountPerProject({
@@ -63,17 +79,34 @@ export function useMyStatisticsData() {
     },
   });
 
+  console.log("[query] enabled:", isRangeValid && hasAccessToken);
+  console.log("[query] hasAccessToken:", hasAccessToken);
+  console.log("[query] status:", calendarStatsQuery.status);
+
   const stats = calendarStatsQuery.data;
-  const visibleDays = useMemo(() => enumerateDays(startDate, endDate), [startDate, endDate]);
-  const dailyMap = useMemo(() => buildDailyMap(stats?.daily ?? []), [stats?.daily]);
+  const visibleDays = useMemo(
+    () => enumerateDays(startDate, endDate),
+    [startDate, endDate],
+  );
+  const dailyMap = useMemo(
+    () => buildDailyMap(stats?.daily ?? []),
+    [stats?.daily],
+  );
   const donutEntries = useMemo(
-    () => buildDonutEntries({ total_tasks: stats?.total_tasks, totals: stats?.totals }),
+    () =>
+      buildDonutEntries({
+        total_tasks: stats?.total_tasks,
+        totals: stats?.totals,
+      }),
     [stats?.total_tasks, stats?.totals],
   );
   const donutBackground = useMemo(
     () =>
       buildDonutGradient(
-        donutEntries.map((entry) => ({ percent: entry.percent, color: entry.color })),
+        donutEntries.map((entry) => ({
+          percent: entry.percent,
+          color: entry.color,
+        })),
       ),
     [donutEntries],
   );

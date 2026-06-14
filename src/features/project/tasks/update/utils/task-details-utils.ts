@@ -43,10 +43,9 @@ export function nameFromEmail(email: string): string {
 export function memberOptionLabel(member: ProjectMember): string {
   const name = member.name?.trim() ?? "";
   const email = member.email?.trim() ?? "";
-  if (name && email) return `${name} (${email})`;
-  if (name) return name;
   if (email) return email;
-  return "Member";
+  if (name) return name;
+  return "";
 }
 
 export function memberAssigneeValue(member: ProjectMember): string {
@@ -55,8 +54,10 @@ export function memberAssigneeValue(member: ProjectMember): string {
 
 export function resolveAssigneeDisplayName(task: ProjectTask | null | undefined, currentAssignee: ProjectMember | null): string {
   return (
+    currentAssignee?.email?.trim() ||
     currentAssignee?.name?.trim() ||
     (currentAssignee?.email?.trim() ? nameFromEmail(currentAssignee.email) : "") ||
+    task?.assignee_email?.trim() ||
     task?.assignee_name?.trim() ||
     (task?.assignee_email?.trim() ? nameFromEmail(task.assignee_email) : "") ||
     "Unassigned"
