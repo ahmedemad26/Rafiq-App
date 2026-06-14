@@ -167,11 +167,6 @@ export async function inviteMember(params: {
     });
 
     if (!emailResult.ok) {
-      console.error("inviteMember email delivery failed", {
-        projectId,
-        email: normalizedEmail,
-        reason: emailResult.reason,
-      });
       return {
         success: true,
         message: "Invitation created, but email delivery could not be confirmed.",

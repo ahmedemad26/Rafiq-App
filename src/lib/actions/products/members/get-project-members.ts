@@ -44,105 +44,22 @@ function normalizeRole(value: unknown): ProjectMember["role"] {
   return "Member";
 }
 
-type ProfileInfo = {
-  name: string;
-  email: string;
-  avatarUrl: string | null;
-};
-
-function mergeProfileInfo(existing: ProfileInfo | undefined, incoming: ProfileInfo): ProfileInfo {
-  return {
-    name: existing?.name?.trim() || incoming.name?.trim() || "",
-    email: existing?.email?.trim() || incoming.email?.trim() || "",
-    avatarUrl: existing?.avatarUrl?.trim() || incoming.avatarUrl?.trim() || null,
-  };
-}
-
-function mapProfileRow(row: Record<string, unknown>): { userId: string; profile: ProfileInfo } | null {
-  const userId =
-    pickUuid(row, ["id", "user_id", "sub"]) ??
-    null;
-  if (!userId) return null;
-
-  const rawMeta = (row.raw_user_meta_data ?? row.user_metadata) as Record<string, unknown> | undefined;
-
-  return {
-    userId,
-    profile: {
-      name:
-        pickFirstString(row, ["full_name", "display_name", "name", "user_name"]) ||
-        pickFirstString(rawMeta ?? {}, ["full_name", "display_name", "name", "user_name"]) ||
-        "",
-      email:
-        pickFirstString(row, ["email", "user_email"]) ||
-        pickFirstString(rawMeta ?? {}, ["email", "user_email"]) ||
-        "",
-      avatarUrl:
-        pickFirstString(row, ["avatar_url", "avatarUrl", "image", "avatar"]) ||
-        pickFirstString(rawMeta ?? {}, ["avatar_url", "avatarUrl", "image", "avatar"]) ||
-        null,
-    },
-  };
-}
-
-async function fetchProfilesByUserIds(
-  baseUrl: string,
-  accessToken: string,
-  anonKey: string,
-  userIds: string[],
-): Promise<Map<string, ProfileInfo>> {
-  const profilesByUserId = new Map<string, ProfileInfo>();
-  if (!userIds.length) return profilesByUserId;
-
-  const filter = `in.(${userIds.join(",")})`;
-  const endpoints: Array<{ table: string; column: string }> = [
-    { table: "auth.users", column: "id" },
-    { table: "profiles", column: "id" },
-  ];
-
-  for (const { table, column } of endpoints) {
-    const url = new URL(`${baseUrl}/rest/v1/${table}`);
-    url.searchParams.set(column, filter);
-
-    const res = await fetch(url.toString(), {
-      method: "GET",
-      headers: buildSupabaseHeaders(accessToken, anonKey),
-      cache: "no-store",
-    });
-
-    if (!res.ok) continue;
-
-    const { data } = await parseJsonResponseBody(res);
-    const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
-
-    for (const row of rows) {
-      const mapped = mapProfileRow(row);
-      if (!mapped) continue;
-
-      const existing = profilesByUserId.get(mapped.userId);
-      profilesByUserId.set(mapped.userId, mergeProfileInfo(existing, mapped.profile));
-    }
-  }
-
-  return profilesByUserId;
-}
 
 function mapMemberRow(
   row: Record<string, unknown>,
   index: number,
   projectId: string,
-  profilesByUserId: Map<string, ProfileInfo>,
 ): ProjectMember {
   const userId = pickUuid(row, ["user_id", "userId", "auth_user_id"]);
-  const profile = userId ? profilesByUserId.get(userId) : undefined;
+  const metadata = (row.metadata ?? {}) as Record<string, unknown>;
 
   return {
-    id: String(row.id ?? userId ?? `${projectId}-${index}`),
+    id: String(row.member_id ?? userId ?? `${projectId}-${index}`),
     userId,
-    name: profile?.name ?? "",
-    email: profile?.email ?? "",
+    name: pickFirstString(metadata, ["name", "full_name", "display_name"]) || "",
+    email: pickFirstString(metadata, ["email", "user_email"]) || String(row.email ?? ""),
     role: normalizeRole(row.role),
-    avatarUrl: profile?.avatarUrl ?? null,
+    avatarUrl: pickFirstString(metadata, ["avatar_url", "avatarUrl"]) || null,
   };
 }
 
@@ -163,10 +80,9 @@ export async function getProjectMembers(projectId: string) {
       return { error: "Missing Supabase configuration." };
     }
 
-    const url = new URL(`${supabase.url}/rest/v1/project_members`);
+    const url = new URL(`${supabase.url}/rest/v1/get_project_members`);
     url.searchParams.set("project_id", `eq.${projectId}`);
-    url.searchParams.set("select", "id,project_id,user_id,role,created_at");
-    url.searchParams.set("order", "created_at.asc");
+    url.searchParams.set("select", "member_id,project_id,user_id,role,email,metadata");
 
     const res = await fetch(url.toString(), {
       method: "GET",
@@ -189,26 +105,8 @@ export async function getProjectMembers(projectId: string) {
     }
 
     const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
-    console.log("[getProjectMembers] rows", rows);
 
-    const userIds = rows
-      .map((row) => pickUuid(row, ["user_id", "userId", "auth_user_id"]))
-      .filter((value): value is string => Boolean(value));
-
-    const profilesByUserId = await fetchProfilesByUserIds(
-      supabase.url,
-      accessToken,
-      supabase.anonKey,
-      userIds,
-    );
-
-    console.log("[getProjectMembers] profilesByUserId", Object.fromEntries(profilesByUserId));
-
-    const members = rows.map((row, index) =>
-      mapMemberRow(row, index, projectId, profilesByUserId),
-    );
-
-    console.log("[getProjectMembers] members", members);
+    const members = rows.map((row, index) => mapMemberRow(row, index, projectId));
 
     const deduped = Array.from(
       members.reduce((acc, item) => {

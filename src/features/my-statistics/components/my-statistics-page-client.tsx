@@ -48,8 +48,6 @@ export default function MyStatisticsPageClient() {
     created_at: null,
   }));
 
-  console.log("[dashboard] final overdueTasks value passed to card", stats?.overdue_tasks ?? 0);
-
   return (
     <section className="mx-auto w-full max-w-[1150px] space-y-4">
       <header>

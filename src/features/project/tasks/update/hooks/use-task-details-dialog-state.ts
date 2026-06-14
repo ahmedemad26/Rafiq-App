@@ -42,15 +42,8 @@ export function useTaskDetailsDialogState({
   const updateMutation = useMutation({
     mutationFn: async (patch: { status?: TaskStatus; assignee_id?: string | null }) => {
       if (!task?.id) throw new Error("Task id is missing.");
-      console.log({
-        taskId: task.id,
-        publicTaskId: task.task_id,
-        patch,
-      });
 
       const result = await updateTask(task.id, patch, task.task_id ?? null);
-
-      console.log("UPDATE RESULT:", result);
 
       if ("error" in result) throw new Error(result.error);
       return true;

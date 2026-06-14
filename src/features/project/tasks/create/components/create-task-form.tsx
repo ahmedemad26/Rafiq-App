@@ -65,7 +65,6 @@ export default function CreateTaskForm({
 
   const onSubmit: SubmitHandler<CreateTaskFormValues> = (values) => {
     const dueLocal = values.due_date?.trim();
-    console.log("[form] dueLocal:", dueLocal);
     const due_date = dueLocal
       ? (() => {
           const d = new Date(dueLocal);

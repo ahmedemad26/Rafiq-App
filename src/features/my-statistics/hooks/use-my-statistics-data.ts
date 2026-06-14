@@ -18,7 +18,6 @@ import {
 
 export function useMyStatisticsData() {
   const { data: session } = useSession();
-  console.log("[client] session:", JSON.stringify(session?.user));
 
   const userId = session?.user?.id ?? "anonymous";
   const hasAccessToken = Boolean(session?.user?.access_token);
@@ -78,10 +77,6 @@ export function useMyStatisticsData() {
       return result.data;
     },
   });
-
-  console.log("[query] enabled:", isRangeValid && hasAccessToken);
-  console.log("[query] hasAccessToken:", hasAccessToken);
-  console.log("[query] status:", calendarStatsQuery.status);
 
   const stats = calendarStatsQuery.data;
   const visibleDays = useMemo(

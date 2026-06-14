@@ -6,7 +6,7 @@ import { queryKeys } from "@/lib/state/query-keys";
 import type { ProjectMember } from "@/lib/types/member";
 
 export function useProjectMembers(projectId: string) {
-  return useQuery({
+  const query = useQuery({
     queryKey: [...queryKeys.projects.root, "members", projectId] as const,
     queryFn: async () => {
       const result = await getProjectMembers(projectId);
@@ -17,4 +17,6 @@ export function useProjectMembers(projectId: string) {
     },
     enabled: Boolean(projectId),
   });
+
+  return query;
 }

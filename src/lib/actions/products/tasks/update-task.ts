@@ -78,12 +78,6 @@ export async function updateTask(
 
       const { data, parseError } = await parseJsonResponseBody(res);
 
-      console.log("UPDATE ONCE", {
-        status: res.status,
-        bodySent: body,
-        responseData: data,
-      });
-
       if (parseError) return { error: parseError, updated: 0 };
 
       if (!res.ok) {
@@ -94,8 +88,6 @@ export async function updateTask(
       }
 
       const updated = Array.isArray(data) ? data.length : 0;
-
-      console.log("UPDATED COUNT", updated);
 
       return { updated, error: "" };
     };
@@ -126,12 +118,6 @@ export async function updateTask(
       const row = Array.isArray(data) ? (data[0] as { assignee_id?: string | null } | undefined) : undefined;
       const actualAssignee = row?.assignee_id?.trim() || null;
       const ok = actualAssignee === expectedAssignee;
-
-      console.log("VERIFY ASSIGNEE", {
-        expectedAssignee,
-        actualAssignee,
-        ok,
-      });
 
       return {
         ok,

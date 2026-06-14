@@ -113,15 +113,9 @@ async function fetchOverdueTasksCount(
       cache: "no-store",
     });
 
-    console.log("[dashboard] overdue count query", {
-      url: url.toString(),
-      status: response.status,
-      contentRange: response.headers.get("content-range"),
-    });
 
     return response.ok ? extractCountFromResponse(response) : 0;
-  } catch (error) {
-    console.error("[dashboard] overdue count fetch error", error);
+  } catch {
     return 0;
   }
 }
@@ -152,7 +146,6 @@ async function fallbackFromTasksTable(
     headers,
     payload,
   );
-  console.log("[dashboard] fallback overdueTasks", overdueTasks);
 
   const url = new URL(`${supabaseUrl}/rest/v1/tasks`);
   url.searchParams.set("select", "id,status,due_date,created_at,project_id");
@@ -283,8 +276,6 @@ export async function getTasksCalendarStats(
         headers,
         payload,
       );
-      console.log("[dashboard] rpc overdueTasks", result.overdue_tasks);
-      console.log("[dashboard] exact overdueTasks", exactOverdueTasks);
       return {
         data: {
           daily: Array.isArray(result.daily) ? result.daily : [],

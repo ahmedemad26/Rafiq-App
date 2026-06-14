@@ -112,7 +112,7 @@ export function MembersTable({
                       value={member.role}
                       onChange={(event) => onRoleChange(member, event.target.value as MemberRoleLabel)}
                       disabled={updatingUserId === memberKey}
-                      className="h-8 min-w-[100px] appearance-none rounded-md border border-slate-200 bg-white px-2.5 pr-7 text-[11px] font-semibold text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-[#003380]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="h-8 min-w-25 appearance-none rounded-md border border-slate-200 bg-white px-2.5 pr-7 text-[11px] font-semibold text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-[#003380]/20 disabled:cursor-not-allowed disabled:opacity-60"
                       aria-label={`Change role for ${displayName}`}
                     >
                       <option value="Admin">Admin</option>

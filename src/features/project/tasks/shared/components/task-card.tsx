@@ -57,14 +57,6 @@ export default function TaskCard({
   onChangeTaskStatus,
 }: TaskCardProps) {
   const assignedMember = resolveAssignedMember(task, members);
-  console.log("TASK", {
-    taskId: task.id,
-    assigneeId: task.assignee_id,
-  });
-  
-  console.log("MEMBERS", members);
-  
-  console.log("ASSIGNED MEMBER", assignedMember);
   const assigneeName = resolveAssigneeName(task, assignedMember);
   const assigneeAvatar = assignedMember?.avatarUrl?.trim() || task.assignee_avatar?.trim() || null;
   const {
